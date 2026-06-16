@@ -22,7 +22,7 @@ S = struct();
 S.whichEye = "right";
 %warning('NewEra syringe pump temporarily set to false!');
 
-onrig = false;
+onrig = true;
 if (onrig)
     S.newera = false;           % use Newera juice pump
     S.arrington = false;        % use Arrington eye tracker
@@ -52,7 +52,7 @@ S.pumpDiameter = 20;      % internal diameter of the juice syringe (mm)
 S.pumpRate = 20;          % rate to deliver juice (ml/minute)
 S.pumpDefVol = 0.01;      % default dispensing volume (ml)
 
-
+% Defaults for TrackPixx. Update once marmoset-specific values are found.
 S.expectedIrisSize = 115;
 S.ledIntensity = 8;
 
@@ -79,9 +79,9 @@ else
    S.frameRate =  120;                 % Frame rate of screen in Hz
    S.screenRect = [0 0 1920 1080];     % Screen dimensions in pixels
    S.screenWidth = 53;                 % Width of screen (cm)
-   S.centerPix =  [960 540];           % Pixels of center of the screen
+   S.centerPix =  ceil(S.screenRect(3:4)/2); % Pixels for center of screen
    S.guiLocation = [800 100 890 660];
-   S.bgColour = 186;                   % use 127 if gamma corrected
+   S.bgColour = 127;                   % use 127 if gamma corrected, or 186
 
    S.screenDistance = 57;              % Distance of eye to screen (cm)
    S.pixPerDeg = PixPerDeg(S.screenDistance, S.screenWidth, S.screenRect(3));

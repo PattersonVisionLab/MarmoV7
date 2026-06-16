@@ -3,6 +3,7 @@ function A=openScreen(S,A)
 %
 % History:
 %   14Jun2026 - Added SkipSyncTests for DummyScreen
+%   16Jun2026 - Added UseDataPixx
     
     PsychStartup();
     
@@ -15,7 +16,9 @@ function A=openScreen(S,A)
     
     % setup the image processing pipeline for ptb
     PsychImaging('PrepareConfiguration');
-    
+    if S.DataPixx  % 06.16.2026
+        PsychImaging('AddTask', 'General', 'UseDataPixx');
+    end
     PsychImaging('AddTask','General','FloatingPoint16Bit');
     %PsychImaging('AddTask','General','FloatingPoint32BitIfPossible');
     

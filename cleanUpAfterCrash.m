@@ -16,6 +16,7 @@ function cleanUpAfterCrash()
     end
 
     if tpx.newBufferFrames > 0
+        fprintf('Clearing %u new buffer frames\n', tpx.newBufferFrames);
         Datapixx('ReadTPxData', tpx.newBufferFrames);
     end
 

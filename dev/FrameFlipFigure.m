@@ -1,6 +1,6 @@
 classdef FrameFlipFigure < handle
 
-    properties
+    properties (SetAccess = private)
         Figure
         Axis
         sensitiveTimePointLine
@@ -38,8 +38,9 @@ classdef FrameFlipFigure < handle
         function createUi(obj)
             obj.Figure = uifigure("Name", "Frame Timing Figure");
             obj.Figure.Position(1) = obj.Figure.Position(1)*0.75;
-            obj.Figure.Position(3) = 500;
+            obj.Figure.Position(3) = 800;
             obj.Axis = uiaxes(obj.Figure, "FontSize", 12);
+            
             obj.sensitiveTimePointLine = line(obj.Axis,...
                 "XData", 0, "YData", 0, "Color", 'r', "Marker", '.',...
                 "MarkerSize", 10, "LineStyle", "none");
@@ -47,8 +48,8 @@ classdef FrameFlipFigure < handle
                 "XData", 0, "YData", 0, "Color", [0.1 0.1 0.1],...
                 "Marker", ".", "MarkerSize", 10, "LineStyle", "none");
             xlabel(obj.Axis, 'Time (sec)');
-            ylabel(obj.Axis, 'Frame Time (sec)');
-            yticks(obj.Axis, 0:10:1000);
+            ylabel(obj.Axis, 'Frame Time (ms)');
+            % yticks(obj.Axis, [1/120, 1/60]);
         end
     end
 end
