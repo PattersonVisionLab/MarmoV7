@@ -20,6 +20,7 @@ classdef KinesisMotorSyringe < marmoview.liquid
         stepSize        (1,1)   double 
         % The diameter of the syringe in mm, dictates mm -> ml mapping
         syringeDiameter (1,1)   double
+        verbose         (1,1)   logical = true
         totalVolume
     end
 
@@ -50,6 +51,9 @@ classdef KinesisMotorSyringe < marmoview.liquid
 
         function deliver(obj)
             obj.DEVICE.jog(obj.moveDirection);
+            if obj.verbose
+                fprintf('\n\nNew motor position: %.3f\n', obj.position);
+            end
         end
 
         function r = report(~)

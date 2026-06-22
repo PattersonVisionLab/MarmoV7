@@ -22,16 +22,17 @@ if S.verbose
 end
 
 % NEW COMMANDS TO INTEGRATE LATER
-S.whichEye = "left";  % magenta on trackpixx
+S.whichEye = "right";  % magenta on trackpixx
 
-onrig = false;
+onrig = true;
 if onrig
     S.newera = false;           % use Newera juice pump
+    S.solenoid = false;         % use solenoid juice delivery
+    S.rewardType = "KinesisMotor";
     S.arrington = false;        % use Arrington eye tracker
     S.eyelink = false;          % use Eyelink eye tracker
     S.trackpixx = true;         % use TrackPixx eye tracker
     S.DummyEye = false;         % use mouse instead of eye tracker
-    S.solenoid = false;         % use solenoid juice delivery
     S.DummyScreen = false;      % don't use a Dummy Display
     S.EyeDump = true;           % store all eye position data
     S.DataPixx = true;
@@ -78,9 +79,12 @@ else
    S.monitor = 'ViewPixx-OLED';        % Monitor used for display window
    S.screenNumber = 1;                 % Designates the display for task stimuli
    S.frameRate =  120;                 % Frame rate of screen in Hz
-   S.screenRect = [0 0 1920 1080];     % Screen dimensions in pixels
+   S.screenRect = [0 0 2560 1440];     % Screen dimensions in pixels
    S.screenWidth = 53;                 % Width of screen (cm)
-   S.centerPix =  ceil(S.screenRect(3:4)/2); % Pixels for center of screen
+
+   S.centerPix =  [...                 % Pixels for center of screen
+       round((S.screenRect(3)-S.screenRect(1))/2) + S.screenRect(1),...
+       round((S.screenRect(4)-S.screenRect(2))/2) + S.screenRect(2)];
    S.guiLocation = [800 100 890 660];
    S.bgColour = 127;                   % use 127 if gamma corrected, or 186
 

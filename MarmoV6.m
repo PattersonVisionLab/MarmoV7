@@ -304,7 +304,7 @@ function Initialize_Callback(hObject, eventdata, handles)
     set(handles.ProtocolTitle,'String',handles.S.protocolTitle);
     
     % OPEN THE PBT SCREEN
-    PsychStartup();
+    %PsychStartup();
     handles.A = marmoview.openScreen(handles.S,handles.A);
     
     % INITIALIZE THE PROTOCOL

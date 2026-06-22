@@ -1,14 +1,15 @@
-%% Parameters
+
 
 %% Run to initialize controller
 % Recommend doing this before cueing up syringe in case controller needs to
-% be homed which messes up the 
+% be homed (below) which might drive the syringe
 
-serialNumber = '';  % On the KCube controller
+serialNumber = '26250117';  % On the KCube controller
 stageName = 'HS ZST213B';
-deviceManager = ur.pattersonlab.aoslo.motion.ThorlabsMotionManager();
+deviceManager = ur.pattersonlab.aoslo.motion.ThorlabsMotorManager();
 device = ur.pattersonlab.aoslo.motion.KST201.init(serialNumber, stageName, deviceManager);
 
+%% Home if needed
 if ~device.isHomed
     device.home();
 end
@@ -36,7 +37,7 @@ obj.deliver();
 % instead if reaching this lower limit.
 
 %% To reset syringe position
-obj.rectract();
+obj.retract();
 
 %% Run to disconnect from controller
 obj.disconnect();

@@ -156,6 +156,7 @@ classdef PR_AcuityAsh < handle
                 P.rewardNumber = o.trialsList(i,6);
                 %******************
                 o.P = P;  % set to most current
+                disp(P)
             end
             
             % Calculate this for pie slice windowing for choice
