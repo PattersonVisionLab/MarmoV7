@@ -1,6 +1,6 @@
 function varargout = MarmoV6(varargin)
 % MARMOV6 M-file for MarmoV6.fig
-% UPDATED 10/16/2025(from MarmoV6, to include TrackPixx Recording Option)
+% Patterson lab trackpixx version (to be MarmoV7 at some point)
 %
 %      THIS IS MARMOV6 VERSION 1C, THIS CORRESPONDS TO THE VERSION TEXT
 %      IN THE MarmoV6.fig FILE
@@ -138,19 +138,29 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     % OPEN UP COMMUNICATION WITH THE PUMP FOR REWARD DELIVERY -- THIS IS DONE
     % IMMEDIATELY USING THE RIG SETTINGS, SO THAT JUICE IS AVAILABLE TO THE
     % MARMOSET WHILE NO PROTOCOLS ARE LOADED
-    if handles.S.newera %
-        handles.reward = marmoview.newera(hObject,...
-            'port', S.pumpCom,...
-            'diameter', S.pumpDiameter,...
-            'volume', S.pumpDefVol,...
-            'rate', S.pumpRate);
-    elseif handles.S.solenoid
-        handles.reward = marmoview.SolenoidControl(S.pumpCom);
-        S.pumpDefVol = handles.reward.volume;
-        vol = sprintf('%d', S.pumpDefVol * 1e3);
-        set(handles.JuiceVolumeText, 'String', [vol ' ms']); % displayed in microliters!!
-    else
-        handles.reward = marmoview.dbgreward(hObject);
+    switch handles.S.rewardType
+        case "Kinesis"
+            deviceManager = ur.pattersonlab.aoslo.motion.ThorlabsMotorManager();
+            device = ur.pattersonlab.aoslo.motion.KST201.init(...
+                S.kinesis_serialNumber, S.kinesis_stageName, deviceManager);
+            assignin('base', 'kinesisDevice', device);
+            handles.reward = marmoview.KinesisMotorSyringe([], device,...
+                "MoveDirection", S.kinesis_moveDirection,...
+                "StepSize", S.kinesis_stepSize,...
+                "SyringeDiameter", S.kinesis_syringeDiameter);
+        case "NewEra"
+            handles.reward = marmoview.newera(hObject,...
+                'port', S.pumpCom,...
+                'diameter', S.pumpDiameter,...
+                'volume', S.pumpDefVol,...
+                'rate', S.pumpRate);
+        case "Solenoid"
+            handles.reward = marmoview.SolenoidControl(S.pumpCom);
+            S.pumpDefVol = handles.reward.volume;
+            vol = sprintf('%d', S.pumpDefVol * 1e3);
+            set(handles.JuiceVolumeText, 'String', [vol ' ms']); % displayed in microliters!!
+        otherwise
+            handles.reward = marmoview.dbgreward(hObject);
     end
     % % TYPICALLY, I PREFER TO HANDLES LARGER/SMALLER REWARDS BY NUMBER OF PULSES
     % INSTEAD OF CHANGING THE VOLUME, ALTHOUGH THE VOLUME CAN BE CHANGED, I
@@ -165,10 +175,13 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     handles.A.juiceCounter = 0;
     
     % *** Initialize the eye tracker
-    if handles.S.arrington % create an @arrington eyetrack object for eye position
+    if handles.S.arrington 
         handles.eyetrack = marmoview.eyetrack_arrington(hObject,'EyeDump',S.EyeDump);
     elseif handles.S.trackpixx
-        handles.eyetrack = marmoview.eyetrack_trackpixx(hObject,'EyeDump',S.EyeDump);
+        handles.eyetrack = marmoview.eyetrack_trackpixx(hObject,...
+            'LedIntensity', S.trackpixx_ledIntensity,...
+            'ExpectedIrisSize', S.trackpixx_expectedIrisSize,...
+            'EyeDump',S.EyeDump);
     else % no eyetrack, use @eyetrack object instead that uses mouse pointer
         handles.eyetrack = marmoview.eyetrack();
     end
@@ -304,8 +317,7 @@ function Initialize_Callback(hObject, eventdata, handles)
     set(handles.ProtocolTitle,'String',handles.S.protocolTitle);
     
     % OPEN THE PBT SCREEN
-    %PsychStartup();
-    handles.A = marmoview.openScreen(handles.S,handles.A);
+    handles.A = marmoview.openScreen(handles.S, handles.A);
     
     % INITIALIZE THE PROTOCOL
     cmd = sprintf('handles.PR = %s(handles.A.window);',handles.S.protocol_class);
@@ -351,7 +363,6 @@ function Initialize_Callback(hObject, eventdata, handles)
             '_',handles.outputDate,'_',handles.outputSuffix,'.mat');
     end
     
-    % TODO: arrington only??
     handles.eyetrack.startfile(handles);
     
     % Show the file name on the GUI
@@ -476,9 +487,9 @@ function ClearSettings_Callback(hObject, eventdata, handles)
     handles.A = A;
     handles.S = MarmoViewRigSettings();
     handles.S.subject = handles.outputSubject;
-    handles.P = struct;
+    handles.P = struct();
     handles.SI = handles.S;
-    handles.PI = struct;
+    handles.PI = struct();
     % If juicer delivery volume was changed during the previous protocol,
     % return it to default. Also add the juice counter for the juice button.
     handles.A.juiceVolume = handles.reward.volume;
@@ -519,7 +530,6 @@ function ClearSettings_Callback(hObject, eventdata, handles)
     
     % Update handles structure
     guidata(hObject, handles);
-
 
 
 %% Callbacks: Main loop
@@ -682,7 +692,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
         end
         % load values into class for plotting (FP) and to label TimeSensitive
         % states (TS)
-        handles.FC.set_task(FP,TS);
+        handles.FC.set_task(FP, TS);
     
         % Task Controller flips first frame and logs the trial start
         [ex,ey] = handles.eyetrack.getgaze();
@@ -915,7 +925,9 @@ function RunTrial_Callback(hObject, eventdata, handles)
     
         % Check for updates in juice volume during trial
         if handles.A.juiceVolume ~= A.juiceVolume
-            fprintf(A.pump,['0 VOL ' num2str(A.juiceVolume/1000)]);
+            if handles.S.rewardType == "NewEra"
+                fprintf(A.pump,['0 VOL ' num2str(A.juiceVolume/1000)]);
+            end
             if handles.S.solenoid
                 set(handles.JuiceVolumeText, 'String', [num2str(A.juiceVolume) ' ms']);
             else
@@ -1023,21 +1035,21 @@ function GiveJuice_Callback(hObject, eventdata, handles)
     handles.A.juiceCounter = handles.A.juiceCounter + 1;
     guidata(hObject,handles);
 
-    
-function JuiceVolumeEdit_CreateFcn(hObject, eventdata, handles) %#ok<*INUSD>
 
 % CHANGE THE SIZE OF THE JUICE REWARD TO BE DELIVERED
 function JuiceVolumeEdit_Callback(hObject, eventdata, handles)
-    vol = get(hObject,'String'); % volume is entered in microliters!!
-    volML = str2double(vol)/1e3; % milliliters
-    handles.reward.volume = volML; % milliliters
-    if handles.S.solenoid
-        set(handles.JuiceVolumeText,'String',[vol ' ms']);
+    % Volume is entered in microliters, classes take milliliters
+    vol = get(hObject, 'String'); 
+    volML = str2double(vol) / 1e3; 
+    handles.reward.volume = volML; 
+    if handles.S.rewardType == "Solenoid"
+        set(handles.JuiceVolumeText, 'String', [vol ' ms']);
     else
-        set(handles.JuiceVolumeText,'String',[vol ' ul']);
+        set(handles.JuiceVolumeText, 'String', [vol ' ul']);
     end
-    set(hObject,'String',''); % why?
-    handles.A.juiceVolume = volML; % <-- A.juiceVolume should *always* be in milliliters!
+    set(hObject, 'String', '');
+    % A.juiceVolume should *always* be in milliliters!
+    handles.A.juiceVolume = volML; 
     guidata(hObject,handles);
 
 
@@ -1051,7 +1063,6 @@ function FlipFrame_Callback(hObject, eventdata, handles)
 
 
 %% Callbacks: Parameter control
-function Parameters_CreateFcn(hObject, eventdata, handles)
 function Parameters_Callback(hObject, eventdata, handles)
     % Get the index of the selected field
     i = get(hObject,'Value');
@@ -1061,8 +1072,6 @@ function Parameters_Callback(hObject, eventdata, handles)
     set(handles.ParameterEdit,'String',num2str(handles.P.(handles.pNames{i})));
     % Update handles structure
     guidata(hObject,handles);
-
-function ParameterEdit_CreateFcn(hObject, eventdata, handles)
 
 function ParameterEdit_Callback(hObject, eventdata, handles)
     % Get the new parameter value
@@ -1085,8 +1094,6 @@ function ParameterEdit_Callback(hObject, eventdata, handles)
     end
     % Update handles structure
     guidata(hObject,handles);           
-
-function TrialMaxEdit_CreateFcn(hObject, eventdata, handles)
 
 function TrialMaxEdit_Callback(hObject, eventdata, handles)
     % Get the new count
@@ -1112,7 +1119,6 @@ function CenterEye_Callback(hObject, eventdata, handles)
     UpdateEyeText(handles);
     UpdateEyePlot(handles);
 
-function GainSize_CreateFcn(hObject, eventdata, handles)
 function GainSize_Callback(hObject, eventdata, handles)
     gainSize = str2double(get(hObject,'String'));
     if ~isnan(gainSize)
@@ -1148,7 +1154,6 @@ function GainDownY_Callback(hObject, eventdata, handles)
     UpdateEyePlot(handles);
 
 
-function ShiftSize_CreateFcn(hObject, eventdata, handles)
 function ShiftSize_Callback(hObject, eventdata, handles)
     shiftSize = str2double(get(hObject,'String'));
     if ~isnan(shiftSize)
@@ -1186,7 +1191,6 @@ function ShiftUp_Callback(hObject, eventdata, handles)
     UpdateEyeText(handles);
     UpdateEyePlot(handles);
 
-function RotationAngleText_CreateFcn(hObject, eventdata, handles)
 function RotationAngleText_Callback(hObject, eventdata, handles)
     roto = str2double(get(hObject,'String'));
     handles.A.rot = roto;
@@ -1195,26 +1199,22 @@ function RotationAngleText_Callback(hObject, eventdata, handles)
     UpdateEyePlot(handles);
 
 %% OUTPUT PANEL CALLBACKS 
-function OutputPrefixEdit_CreateFcn(hObject, eventdata, handles)
 function OutputPrefixEdit_Callback(hObject, eventdata, handles)
     handles.outputPrefix = get(hObject,'String');
     handles = UpdateOutputFilename(handles);
     guidata(hObject,handles);
 
-function OutputSubjectEdit_CreateFcn(hObject, eventdata, handles)
 function OutputSubjectEdit_Callback(hObject, eventdata, handles)
     handles.outputSubject = get(hObject,'String');
     handles.S.subject = handles.outputSubject;
     handles = UpdateOutputFilename(handles);
     guidata(hObject,handles);
 
-function OutputDateEdit_CreateFcn(hObject, eventdata, handles)
 function OutputDateEdit_Callback(hObject, eventdata, handles)
     handles.outputDate = get(hObject,'String');
     handles = UpdateOutputFilename(handles);
     guidata(hObject,handles);
 
-function OutputSuffixEdit_CreateFcn(hObject, eventdata, handles)
 function OutputSuffixEdit_Callback(hObject, eventdata, handles)
     handles.outputSuffix = get(hObject,'String');
     handles = UpdateOutputFilename(handles);
@@ -1236,6 +1236,9 @@ function CloseGui_Callback(hObject, eventdata, handles)
     
     % Close the pump
     handles.reward.report()
+    if handles.S.rewardType == "Kinesis"
+        handles.reward.disconnect();
+    end
     delete(handles.reward);
     handles.reward = NaN;
     

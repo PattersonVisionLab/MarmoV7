@@ -28,8 +28,9 @@ classdef (Abstract) EyeTracker < handle
 
         end
 
-        function [x1, y2] = getgaze(obj)
-            
+        function [x, y] = getgaze(obj)
+            x = 0; y = 0;
+
         end 
 
         function r = getpupil(obj)

@@ -22,42 +22,63 @@ if S.verbose
 end
 
 % NEW COMMANDS TO INTEGRATE LATER
-S.whichEye = "right";  % magenta on trackpixx
 
 onrig = true;
 if onrig
+    S.rewardType = "Kinesis";   % string: Kinesis, NewEra, Solenoid, None
     S.newera = false;           % use Newera juice pump
     S.solenoid = false;         % use solenoid juice delivery
-    S.rewardType = "KinesisMotor";
+    S.kinesis = true;           % use kinesis stepper motor
+
+    % string: "Trackpixx", "Eyelink", "Arrington", "Mouse"
+    S.eyetrackerType = "TrackPixx"; 
     S.arrington = false;        % use Arrington eye tracker
     S.eyelink = false;          % use Eyelink eye tracker
     S.trackpixx = true;         % use TrackPixx eye tracker
     S.DummyEye = false;         % use mouse instead of eye tracker
+
     S.DummyScreen = false;      % don't use a Dummy Display
     S.EyeDump = true;           % store all eye position data
     S.DataPixx = true;
 else
+    S.rewardType = "None";
     S.newera = false; 
     S.solenoid = false;
+    S.kinesis = false;
+
+    S.eyetrackerType = "Mouse";
     S.arrington = false;
     S.trackpixx = false;     
     S.eyelink = false;
     S.DummyEye = true;
+
     S.DummyScreen = true;
     S.EyeDump = false;
     S.DataPixx = false;
 end
 %***************************
-
-S.pumpCom = 'COM4';       % COM port the New Era syringe pump
-S.pumpDiameter = 20;      % internal diameter of the juice syringe (mm)
-S.pumpRate = 20;          % rate to deliver juice (ml/minute)
-S.pumpDefVol = 0.01;      % default dispensing volume (ml)
+switch S.rewardType
+    case "NewEra"
+        S.pumpCom = 'COM4';       % COM port the New Era syringe pump
+        S.pumpDiameter = 20;      % internal diameter of the juice syringe (mm)
+        S.pumpRate = 20;          % rate to deliver juice (ml/minute)
+        S.pumpDefVol = 0.01;      % default dispensing volume (ml)
+    case "Kinesis"
+        S.kinesis_serialNumber = '26250117';
+        S.kinesis_stageName = "HS ZST213B";
+        S.kinesis_syringeDiameter = 10;   % Internal diameter of syringe (mm)
+        S.kinesis_moveDirection = "down"; % Direction to move to dispense
+        S.kinesis_stepSize = 0.02;        % Step to release 1 drop reliably (mm)
+end
 
 % Defaults for TrackPixx. Update once marmoset-specific values are found.
-S.expectedIrisSize = 115;
-S.ledIntensity = 8;
-
+if S.eyetrackerType == "TrackPixx"
+    S.trackpixx_expectedIrisSize = 115;     % pixels
+    S.trackpixx_species = 1;                % 1 = NHP, 0 = human
+    S.trackpixx_ledIntensity = 12;            
+    S.trackpixx_lens = 3;                   % 75 mm
+    S.trackpixx_mainEye = "right";          % right = magenta on trackpixx
+end
 
 if S.DummyScreen
 

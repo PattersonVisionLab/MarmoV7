@@ -49,6 +49,11 @@ classdef KinesisMotorSyringe < marmoview.liquid
             obj.initialize();
         end
 
+        function set.volume(obj, value)
+            obj.volume = value;
+            obj.setStepSize(obj.ml2mm(value), false);
+        end
+
         function deliver(obj)
             obj.DEVICE.jog(obj.moveDirection);
             if obj.verbose
@@ -62,13 +67,17 @@ classdef KinesisMotorSyringe < marmoview.liquid
 
         function txt = getVolumeText(obj, value)
             if nargin < 2
-                value = obj.volume;  % uL
+                value = obj.volume * 1000;  % uL
             end
             txt = fprintf('%3id uL', value);
         end
 
         function ml = mm2ml(obj, mm)
             ml = obj.syringeDiameter * pi * mm;
+        end
+
+        function mm = ml2mm(obj, ml)
+            mm = (obj.syringeDiameter * pi) / ml;
         end
     end
 
@@ -86,10 +95,17 @@ classdef KinesisMotorSyringe < marmoview.liquid
             end
         end
 
-        function setStepSize(obj, value)
+        function setStepSize(obj, value, updateVolume)
+            % updateVolume option prevents circular calls with volume setter
+            if narign < 3
+                updateVolume = true;
+            end
             obj.DEVICE.setJogStepSize(value);
             obj.stepSize = value;
-            obj.volume = obj.mm2ml(value);
+            if updateVolume
+                obj.volume = obj.mm2ml(value);
+            end
+            fprintf('Set kinesis step size to %.4f\n', obj.stepSize);
         end
 
         function disconnect(obj)

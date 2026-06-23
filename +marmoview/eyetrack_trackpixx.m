@@ -1,6 +1,5 @@
 classdef eyetrack_trackpixx < handle
 
-
     properties (SetAccess = private)
         whichEye            (1,1)   string = "right"
         ledIntensity        (1,1)   double
@@ -17,8 +16,14 @@ classdef eyetrack_trackpixx < handle
         isAwake     (1,1)       logical     = false
     end
 
+    % Magic numbers and future parameters
+    properties (Hidden, Constant)
+        LENS = 3;
+        SPECIES = 1;
+    end
+
     methods
-        function obj = eyetrack_trackpixx(h, varargin) 
+        function obj = eyetrack_trackpixx(~, varargin) 
 
             ip = inputParser();
             ip.KeepUnmatched = true;
@@ -47,15 +52,16 @@ classdef eyetrack_trackpixx < handle
         function initialize(obj)
             cprintf('_[0.7,0.3,0.5]', '\tTrackpixx, call initialize\n');
             Datapixx('Open');
-            Datapixx('SetLedIntensity', obj.ledIntensity);
             Datapixx('SetTPxAwake');
             obj.isAwake = true;
-            Datapixx('SetExpectedIrisSizeInPixels', obj.expectedIrisSize);
+            Datapixx('SetTrackingSpecies', 1);  % NHP
+            Datapixx('SetLens', 3);  % 75 mm
+            %Datapixx('SetLedIntensity', obj.ledIntensity);
+            %Datapixx('SetExpectedIrisSizeInPixels', obj.expectedIrisSize);
             Datapixx('RegWrRd');
         end
 
         function startfile(~, ~)
-            cprintf('_[0.7,0.3,0.5]', '\tTrackpixx, call startfile\n');
             Datapixx('Open');
             Datapixx('SetupTPxSchedule');
             Datapixx('RegWrRd');
@@ -93,8 +99,12 @@ classdef eyetrack_trackpixx < handle
 
         function [x, y] = getgaze(obj)
             % GETGAZE  Runs each frame flip
-            %cprintf('_[0.7,0.3,0.5]', '\tTrackpixx, call getgaze\n');
-            [~, ~, ~, ~, xRawRight, yRawRight, xRawLeft, yRawLeft, timeTag] = ...
+            if ~obj.EyeDump
+                x = 0; y = 0;
+                return
+            end
+
+            [~, ~, ~, ~, xRawRight, yRawRight, xRawLeft, yRawLeft, ~] = ...
                 Datapixx('GetEyePosition');
          
             if obj.whichEye == "right"
@@ -108,16 +118,10 @@ classdef eyetrack_trackpixx < handle
 
         function r = getpupil(obj)
             % GETPUPIL  Runs each frame flip
-            
-            % There are two functions for this
-            % r = Datapixx('GetPupilSizeSimple');
-            
-            %cprintf('_[0.7,0.3,0.5]', '\tTrackpixx, call getpupil\n');
-            [ppLeftMajor, ppLeftMinor, ppRightMajor, ppRightMinor] = Datapixx('GetPupilSize');
-            if obj.whichEye == "right"
-                r = mean([ppRightMajor, ppRightMinor]);
+            if obj.EyeDump
+                r = Datapixx('GetPupilSizeSimple');
             else
-                r = mean([ppLeftMajor, ppLeftMinor]);
+                r = 1;
             end
         end
 
