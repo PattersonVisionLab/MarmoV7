@@ -20,14 +20,13 @@ function A = openScreen(S, A)
 
     % 22Jun2026 - normalized values (0-1), not 8-bit
     AssertOpenGL;
-    PsychDefaultSetup(2);
+    PsychDefaultSetup(0);
 
     % setup the image processing pipeline for ptb
     PsychImaging('PrepareConfiguration');
     if S.DataPixx  % 06.16.2026
         PsychImaging('AddTask', 'General', 'UseDataPixx');
-        PsychImaging('AddTask', 'General', 'FloatingPoint32Bit');
-        PsychImaging('AddTask', 'General', 'EnableDataPixxM16Output');
+        PsychImaging('AddTask','General','FloatingPoint16Bit');
     else
         PsychImaging('AddTask','General','FloatingPoint16Bit');
     end
@@ -45,7 +44,10 @@ function A = openScreen(S, A)
         [A.window, A.screenRect] = PsychImaging('OpenWindow',...
             S.screenNumber, S.bgColour);
         % Add gamma correction
-        PsychColorCorrection('SetEncodingGamma', A.window, 1/S.gamma);
+        PsychColorCorrection('SetEncodingGamma', A.window, 1 / S.gamma);
+        
+        % Ensure that the graphics board's gamma table does not transform our pixels
+        % Screen('LoadNormalizedGammaTable', A.window, linspace(0, 1, 256)' * [1, 1, 1]);
     end
 
     A.frameRate = FrameRate(A.window);

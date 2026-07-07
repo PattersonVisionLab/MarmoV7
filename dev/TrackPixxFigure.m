@@ -49,7 +49,7 @@ classdef TrackPixxFigure < handle
     methods (Access = private)
         function createUi(obj)
             obj.Figure = uifigure("Name", "Trackpixx Figure");
-            g = uigridlayout(3, 1,...
+            g = uigridlayout(obj.Figure, [3, 1],...
                 "RowHeight", {'1x', '1x', '1.5x'});
 
             obj.Pupil = uiaxes(g);

@@ -114,6 +114,13 @@ classdef KinesisMotorSyringe < marmoview.liquid
             fprintf('Set kinesis step size to %.4f\n', obj.stepSize);
         end
 
+        function setMoveDirection(obj, direction)
+            direction = convertCharsToStrings(direction);
+            assert(ismember(direction, ["up", "down"]), "Invalid move direction")
+
+            obj.moveDirection = direction;
+        end
+
         function disconnect(obj)
             obj.DEVICE.disconnect();
         end

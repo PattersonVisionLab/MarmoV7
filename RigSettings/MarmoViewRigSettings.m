@@ -31,7 +31,7 @@ if onrig
     S.kinesis = true;           % use kinesis stepper motor
 
     % string: "Trackpixx", "Eyelink", "Arrington", "Mouse"
-    S.eyetrackerType = "TrackPixx"; 
+    S.eyetrackerType = "Trackpixx"; 
     S.arrington = false;        % use Arrington eye tracker
     S.eyelink = false;          % use Eyelink eye tracker
     S.trackpixx = true;         % use TrackPixx eye tracker
@@ -72,7 +72,7 @@ switch S.rewardType
 end
 
 % Defaults for TrackPixx. Update once marmoset-specific values are found.
-if S.eyetrackerType == "TrackPixx"
+if S.eyetrackerType == "Trackpixx"
     S.trackpixx_expectedIrisSize = 70;     % pixels
     S.trackpixx_species = 1;                % 1 = NHP, 0 = human
     if S.trackpixx_species == 1
@@ -96,7 +96,7 @@ if S.DummyScreen
    S.centerPix = ceil(S.screenRect(3:4)/2); % Pixels of center of screen
    
    S.guiLocation = [1000 100 890 660];
-   S.bgColour = 0.5; % 186 if not gamma corrected
+   S.bgColour = 127; % 186 if not gamma corrected
 
    S.screenDistance = 30; %14; %57;         % Distance of eye to screen (cm)
    S.pixPerDeg = PixPerDeg(S.screenDistance,S.screenWidth,S.screenRect(3));
@@ -113,7 +113,7 @@ else
        round((S.screenRect(3)-S.screenRect(1))/2) + S.screenRect(1),...
        round((S.screenRect(4)-S.screenRect(2))/2) + S.screenRect(2)];
    S.guiLocation = [800 100 890 660];
-   S.bgColour = 0.5;                   % use 127 if gamma corrected, or 186
+   S.bgColour = 127;                   % use 127 if gamma corrected, or 186
 
    S.screenDistance = 70;              % Distance of eye to screen (cm)
    S.pixPerDeg = PixPerDeg(S.screenDistance, S.screenWidth, S.screenRect(3));

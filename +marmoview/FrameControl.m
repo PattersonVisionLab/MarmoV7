@@ -61,6 +61,7 @@ classdef FrameControl < handle
 
     properties
         FrameTimingFigure
+        TpxFigure
     end
     
     methods
@@ -138,6 +139,7 @@ classdef FrameControl < handle
                            uint8(obj.eyeIntensity * [1,-1,1]);
 
             obj.FrameTimingFigure = FrameFlipFigure();
+            obj.TpxFigure = TrackPixxFigure();
         end
         
         function update_args_from_Pstruct(obj, P)
@@ -230,7 +232,7 @@ classdef FrameControl < handle
             y = (eyepos(2) - obj.c(2)) / (obj.dy * obj.pixPerDeg);
             [x, y] = obj.rotatecore(x, y, obj.rot);
 
-            disp([eyepos, x, y, pupil]);
+            %disp([eyepos, x, y, pupil]);
         end
         
         
@@ -285,6 +287,10 @@ classdef FrameControl < handle
             % Store the Clock Sixlet 
             CL = fix(clock);
             CL(1) = CL(1) - 2000;
+        end
+
+        function updateTpxPlot(obj, tpxData)
+            obj.TpxFigure.updateUi(tpxData);
         end
         
         function plot_eye_trace_and_flips(obj, handles)

@@ -175,15 +175,17 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     handles.A.juiceCounter = 0;
     
     % *** Initialize the eye tracker
-    if handles.S.arrington 
-        handles.eyetrack = marmoview.eyetrack_arrington(hObject,'EyeDump',S.EyeDump);
-    elseif handles.S.trackpixx
-        handles.eyetrack = marmoview.eyetrack_trackpixx(hObject,...
-            'LedIntensity', S.trackpixx_ledIntensity,...
-            'ExpectedIrisSize', S.trackpixx_expectedIrisSize,...
-            'EyeDump',S.EyeDump);
-    else % no eyetrack, use @eyetrack object instead that uses mouse pointer
-        handles.eyetrack = marmoview.eyetrack();
+    switch handles.S.eyetrackerType 
+        case "Arrington" 
+            handles.eyetrack = marmoview.eyetrack_arrington(hObject,...
+                'EyeDump',S.EyeDump);
+        case "Trackpixx"
+            handles.eyetrack = marmoview.eyetrack_trackpixx(hObject,...
+                'LedIntensity', S.trackpixx_ledIntensity,...
+                'ExpectedIrisSize', S.trackpixx_expectedIrisSize,...
+                'EyeDump',S.EyeDump);
+        otherwise % use mouse pointer
+            handles.eyetrack = marmoview.eyetrack();
     end
     
     
@@ -495,7 +497,7 @@ function ClearSettings_Callback(hObject, eventdata, handles)
     handles.A.juiceVolume = handles.reward.volume;
     handles.A.juiceCounter = 0;
     
-    if handles.S.solenoid
+    if handles.S.rewardType == "Solenoid"
         set(handles.JuiceVolumeText,...
             'String', sprintf('%3i ms',handles.A.juiceVolume*1e3));
     else
@@ -656,7 +658,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
         % Update in case juice volume was set in parameters (TODO, standardize)
         if handles.A.juiceVolume ~= A.juiceVolume
             handles.reward.setVolume(A.juiceVolume);
-            if (handles.S.solenoid)
+            if handles.S.rewardType == "Solenoid"
                 set(handles.JuiceVolumeText,...
                     'String', sprintf('%3i ms',A.juiceVolume*1e3));
             else
@@ -717,7 +719,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
         end
         %**************************************************
     
-        if S.trackpixx
+        if S.eyetrackerType == "Trackpixx"
             handles.eyetrack.unpause();
         end
         % ----------------
@@ -803,7 +805,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
         ENDCLOCK = handles.FC.last_screen_flip();   % set screen to gray, trial over, start ITI
         ENDCLOCKTIME = GetSecs();
         % Stop acquisition of data to the buffer.
-        if S.trackpixx
+        if S.eyetrackerType == "Trackpixx"
             handles.eyetrack.pause();
         end
     
@@ -882,8 +884,13 @@ function RunTrial_Callback(hObject, eventdata, handles)
         end
     
     
-        if handles.S.trackpixx
+        if handles.S.eyetrackerType == "Trackpixx"
             D.TPxData = handles.eyetrack.getDataOnBuffer();
+            try
+                handles.FC.updateTpxPlot(D.TPxData);
+            catch ME
+                warning(ME.identifier, '%s', ME.message);
+            end
         else
             D.TPxData = [];
         end
@@ -930,7 +937,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
             if handles.S.rewardType == "NewEra"
                 fprintf(A.pump,['0 VOL ' num2str(A.juiceVolume/1000)]);
             end
-            if handles.S.solenoid
+            if handles.S.rewardType == "Solenoid"
                 set(handles.JuiceVolumeText, 'String', [num2str(A.juiceVolume) ' ms']);
             else
                 set(handles.JuiceVolumeText, 'String', [num2str(A.juiceVolume) ' ul']);
@@ -1257,7 +1264,7 @@ function CloseGui_Callback(hObject, eventdata, handles)
     handles.reward = NaN;
     
     % Close the trackpixx
-    if handles.S.trackpixx && handles.eyetrack.isAwake
+    if handles.S.eyetrackerType == "Trackpixx" && handles.eyetrack.isAwake
         status = Datapixx('GetTPxStatus');
         toRead = status.newBufferFrames;
         if toRead > 0
