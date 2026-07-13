@@ -20,7 +20,7 @@ function A = openScreen(S, A)
 
     % 22Jun2026 - normalized values (0-1), not 8-bit
     AssertOpenGL;
-    PsychDefaultSetup(0);
+    PsychDefaultSetup(2);
 
     % setup the image processing pipeline for ptb
     PsychImaging('PrepareConfiguration');

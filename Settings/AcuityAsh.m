@@ -1,14 +1,14 @@
-function [S,P] = AcuitySprout
+function [S,P] = AcuityAsh()
 
 %%%% NECESSARY VARIABLES FOR GUI %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LOAD THE RIG SETTINGS, THESE HOLD CRUCIAL VARIABLES SPECIFIC TO THE RIG,
 % IF A CHANGE IS MADE TO THE RIG, CHANGE THE RIG SETTINGS FUNCTION IN
 % SUPPORT FUNCTIONS
-S = MarmoViewRigSettings;
+S = MarmoViewRigSettings();
 
 % NOTE THE MARMOVIEW VERSION USED FOR THIS SETTINGS FILE, IF AN ERROR, IT
 % MIGHT BE A VERSION PROBLEM
-S.MarmoViewVersion = '5';
+S.MarmoViewVersion = '7';  % Upgrade from 5
 
 % PARAMETER DESCRIBING TRIAL NUMBER TO STOP TASK
 S.finish = 400;
@@ -83,10 +83,15 @@ P.radius = 2.0;
 S.radius = 'Grating radius (degrees):';
 P.orientation = 0;
 S.orientation = 'Orientation of grating (degrees):';
-P.bkgd = 127;
-S.bkgd = 'Choose a grating background color (0-255):';
-P.range = 127;
-S.range = 'Luminance range of grating (1-127):';
+if S.use8Bit
+    P.bkgd = 127;
+    P.range = 127;
+else
+    P.bkgd = 0.5;
+    P.range = 0.5;
+end
+S.bkgd = 'Choose a grating background color (0-1/0-255):';
+S.range = 'Luminance range of grating (0-0.5/1-127):';
 P.phase = -1;
 S.phase = 'Grating phase (-1 or 1):';
 P.squareWave = 0;
@@ -104,13 +109,18 @@ S.showEye = 'Show the gaze indicator? (0 or 1):';
 P.fixPointRadius = 0.25; 
 S.fixPointRadius = 'Fix Point Radius (degs):';
 P.fixPointColorOut = 0;
-S.fixPointColorOut = 'Color of point outline (0-255):';
+S.fixPointColorOut = 'Color of point outline (0-1/0-255):';
 P.fixPointColorIn = 255;
-S.fixPointColorIn = 'Color of point center (0-255):';
+S.fixPointColorIn = 'Color of point center (0-1/0-255):';
 P.xFixDeg = 0.0; 
 S.xFixDeg = 'Fix X center (degs):';
 P.yFixDeg = 0.0;
 S.yFixDeg = 'Fix Y center (degs):';
+
+if ~S.use8Bit
+    P.fixPointColorIn = P.fixPointColorIn/255;
+    P.fixPointColorOut = P.fixPointColorOut/255;
+end
 
 % Fixation and Response Windows
 P.initWinRadius = 1.5; % 2.5; % was 1.0

@@ -1,4 +1,4 @@
-function [S,P] = Speed_Motion_OKN
+function [S,P] = Speed_Motion_OKN()
 
 %%%% NECESSARY VARIABLES FOR GUI
 %%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -6,11 +6,11 @@ function [S,P] = Speed_Motion_OKN
 % LOAD THE RIG SETTINGS, THESE HOLD CRUCIAL VARIABLES SPECIFIC TO THE RIG,
 % IF A CHANGE IS MADE TO THE RIG, CHANGE THE RIG SETTINGS FUNCTION IN
 % SUPPORT FUNCTIONS
-S = MarmoViewRigSettings;
+S = MarmoViewRigSettings();
 
 % NOTE THE MARMOVIEW VERSION USED FOR THIS SETTINGS FILE, IF AN ERROR, IT
 % MIGHT BE A VERSION PROBLEM
-S.MarmoViewVersion = '5';
+S.MarmoViewVersion = '7';  % Upgrade from 5
 
 % PARAMETER DESCRIBING TRIAL NUMBER TO STOP TASK
 S.finish = 200;
@@ -60,7 +60,11 @@ P.mingap = 1.0;
 S.mingap = 'Min gap to next target (s):';
 P.maxgap = 2.0;
 S.maxgap = 'Max gap to next target (s):';
-P.bkgd = 0.5;
+if S.use8Bit
+    P.bkgd = 127;
+else
+    P.bkgd = 0.5;
+end
 S.bkgd = 'Choose a grating background color (0-1):';
 
 % Gaze indicator
@@ -81,7 +85,8 @@ P.noiseheight = 15.0;  % radius of noise field around origin
 S.noiseheight = 'Spatial noise height (degs, +/- origin):';
 
 %***************
-P.gratingcycle = 120;  % number of frames for one cycle (120hz, if 120 => 1hz)
+% number of frames for one cycle (120hz, if 120 => 1hz)
+P.gratingcycle = S.frameRate; 
 S.gratingcycle = 'Set the temporal freq of grating drift';
 P.spf = 0.2;  % spatial frequency
 S.spf = 'Spat freq (cyc/deg):';
@@ -97,9 +102,14 @@ S.speednum = 'Number of speeds, log 2 scale from base speed';
 %********* parameters for noise stimulus following gaze
 P.noiseradius = 50; %4.0;  % diameter of target is dva
 S.noiseradius = 'Size of Face(dva):';
-P.noiserange = 0.5; %48/255
+if S.use8Bit
+    P.noiserange = 48;
+else
+    P.noiserange = 48/255;
+end
 S.noiserange = 'Luminance range of grating (0-0.5):';
 P.squareWave = 1;
 S.squareWave = 'Use square wave in grating'; 
-  
+P.dutyCycle = 0.5;
+S.dutyCycle = 'Light:dark ratio (0-1):';
 

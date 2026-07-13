@@ -15,6 +15,7 @@ function S = MarmoViewRigSettings
 
 S = struct();
 S.verbose = false;
+S.use8Bit = false;
 S.TimeSensitive = [];  % default, allow GUI updating in run func states
 
 if S.verbose
@@ -23,38 +24,23 @@ end
 
 % NEW COMMANDS TO INTEGRATE LATER
 
-onrig = true;
+onrig = false;
 if onrig
-    S.rewardType = "Kinesis";   % string: Kinesis, NewEra, Solenoid, None
-    S.newera = false;           % use Newera juice pump
-    S.solenoid = false;         % use solenoid juice delivery
-    S.kinesis = true;           % use kinesis stepper motor
-
+    S.DataPixx = true;
+    % string: Kinesis, NewEra, Solenoid, None
+    S.rewardType = "Kinesis";   
     % string: "Trackpixx", "Eyelink", "Arrington", "Mouse"
     S.eyetrackerType = "Trackpixx"; 
-    S.arrington = false;        % use Arrington eye tracker
-    S.eyelink = false;          % use Eyelink eye tracker
-    S.trackpixx = true;         % use TrackPixx eye tracker
     S.DummyEye = false;         % use mouse instead of eye tracker
-
     S.DummyScreen = false;      % don't use a Dummy Display
     S.EyeDump = true;           % store all eye position data
-    S.DataPixx = true;
 else
+    S.DataPixx = false;
     S.rewardType = "None";
-    S.newera = false; 
-    S.solenoid = false;
-    S.kinesis = false;
-
     S.eyetrackerType = "Mouse";
-    S.arrington = false;
-    S.trackpixx = false;     
-    S.eyelink = false;
     S.DummyEye = true;
-
     S.DummyScreen = true;
     S.EyeDump = false;
-    S.DataPixx = false;
 end
 %***************************
 switch S.rewardType
@@ -84,25 +70,29 @@ if S.eyetrackerType == "Trackpixx"
     S.trackpixx_mainEye = "right";          % right = magenta on trackpixx
 end
 
-S.gamma = 2.2;                       
+S.gamma = 2.2;    
+if S.use8Bit
+    % use 127 if gamma corrected, or 186
+    S.bgColour = 127;
+else
+    S.bgColour = 0.5;
+end                   
 
 if S.DummyScreen
-
    S.monitor = 'Laptop';                    % Monitor for display window
    S.screenNumber = 1;                      % Display for task stimuli
    S.frameRate = 60;                        % Frame rate of screen (Hz)
-   S.screenRect = [0 0 960 540];            % Screen dimensions in pixels
+   S.screenRect = [50 50 960 540];            % Screen dimensions in pixels
    S.screenWidth = 15;                      % Width of screen (cm)
-   S.centerPix = ceil(S.screenRect(3:4)/2); % Pixels of center of screen
+   S.centerPix =  [...                      % Pixels for center of screen
+       round((S.screenRect(3)-S.screenRect(1))/2) + S.screenRect(1),...
+       round((S.screenRect(4)-S.screenRect(2))/2) + S.screenRect(2)];
    
    S.guiLocation = [1000 100 890 660];
-   S.bgColour = 127; % 186 if not gamma corrected
-
-   S.screenDistance = 30; %14; %57;         % Distance of eye to screen (cm)
+   S.screenDistance = 40; %14; %57;         % Distance of eye to screen (cm)
    S.pixPerDeg = PixPerDeg(S.screenDistance,S.screenWidth,S.screenRect(3));
     
-else    
-    
+else    % Rig config
    S.monitor = 'ViewPixx-OLED';        % Monitor used for display window
    S.screenNumber = 1;                 % Designates the display for task stimuli
    S.frameRate =  120;                 % Frame rate of screen in Hz
@@ -113,10 +103,8 @@ else
        round((S.screenRect(3)-S.screenRect(1))/2) + S.screenRect(1),...
        round((S.screenRect(4)-S.screenRect(2))/2) + S.screenRect(2)];
    S.guiLocation = [800 100 890 660];
-   S.bgColour = 127;                   % use 127 if gamma corrected, or 186
-
    S.screenDistance = 70;              % Distance of eye to screen (cm)
    S.pixPerDeg = PixPerDeg(S.screenDistance, S.screenWidth, S.screenRect(3));
-
 end
+
 

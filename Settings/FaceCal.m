@@ -8,7 +8,7 @@ S = MarmoViewRigSettings;
 
 % NOTE THE MARMOVIEW VERSION USED FOR THIS SETTINGS FILE, IF AN ERROR, IT
 % MIGHT BE A VERSION PROBLEM
-S.MarmoViewVersion = '2';
+S.MarmoViewVersion = '7'; % originally 2
 
 % PARAMETER DESCRIBING TRIAL NUMBER TO STOP TASK
 S.finish = 100;
@@ -59,6 +59,11 @@ P.showEye = 1;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
 P.bkgd = 127;
 S.bkgd = 'Choose the background color (0-255):';
+
+if ~S.use8Bit
+    P.eyeIntensity = P.eyeIntensity/255;
+    P.bkgd = P.bkgd/255;
+end
 
 % Trial timing
 P.faceDur = 2;

@@ -17,7 +17,7 @@ classdef gaussimages < handle
         imagenum = 0;   %if set zeros, picks at random which to show
         position = [0.0, 0.0]; % [x,y] (pixels)
         radius = 1;  % size in pixels, must be set
-        bkgd  = 127;
+        bkgd  = 0.5;  % normalized 0-1
         gray = true;
         transparency  = 0.5;
         contrast  = 1;
@@ -60,42 +60,42 @@ classdef gaussimages < handle
             obj.radius = ip.Results.Radius;
             obj.gray = ip.Results.Gray;
             obj.bkgd = ip.Results.Bkgd;
-            obj.transparency = ip.Results.Bkgd;
+            obj.transparency = ip.Results.transparency;
         end
         
         function obj = loadimages(obj, fName)
-            
+
             F = load(fName);
             images = fields(F);
             n = length(images);
             obj.tex = nan(n,1);
             obj.texDim = nan(n,1);
             for i = 1:n
-                imo = F.(images{i});
+                imo = double(F.(images{i})) / 255;  % uint8 --> 0-1
                 obj.texDim(i) = length(imo);
                 [x,y] = meshgrid((1:obj.texDim(i))-obj.texDim(i)/2);
                 g = exp(-(x.^2+y.^2)/(2*(obj.texDim(i)/6)^2));
                 g = repmat(g,[1 1 3]);
-                im = uint8((g.*double(imo)) + obj.bkgd*(1-g));
+                im = (g.*imo) + obj.bkgd*(1-g);
                 if (obj.gray)
-                    im = uint8(squeeze(mean(im,3)));  % go to grayscale
+                    im = squeeze(mean(im,3));  % go to grayscale
                 end
-                
-                % then define transparency for g-blending
+
+                % then define transparency for g-blending (alpha, 0-1)
                 if (obj.transparency > 0)
-                    t1 = 255 * (squeeze(mean(g,3)) > 0.05);
+                    t1 = double(squeeze(mean(g,3)) > 0.05);
                 else
-                    t1 = 255 * squeeze(mean(g,3));
+                    t1 = squeeze(mean(g,3));
                 end
-                rim = uint8( zeros(size(im,1),size(im,2),4) );
+                rim = zeros(size(im,1),size(im,2),4);
                 rim(:,:,1) = im(:,:,1);
                 rim(:,:,2) = im(:,:,2);
                 rim(:,:,3) = im(:,:,3);
                 %**** set transparency
-                rim(:,:,4) = uint8(t1);
-                % Create the gauss texture
+                rim(:,:,4) = t1;
+                % Create the gauss texture (normalized 0-1, matches PsychDefaultSetup(2))
                 obj.tex(i) = Screen('MakeTexture', obj.winPtr, rim);
-                
+
                 %**** initialize default radius based on last loaded image size
                 obj.radius = length(imo);
             end

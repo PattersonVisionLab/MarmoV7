@@ -1,5 +1,6 @@
 % core task controller
 % 8-30-2018 - Jude Mitchell
+% TODO: This is setting background but does not know about settings file and protocol file
 
 classdef FrameControl < handle
     %
@@ -52,7 +53,7 @@ classdef FrameControl < handle
     properties 
         showEye = 0;
         eyeIntensity = 20;
-        Bkgd = 127;       % need to know for screen flip
+        Bkgd = 127;       % FIXME need to know for screen flip
         eyeRadius = 2.0;  % of screen pointer
         centerPix = [0,0];
         pixPerDeg = 30;
@@ -121,7 +122,7 @@ classdef FrameControl < handle
             
             p.addParameter('showEye', 0, @isfloat);
             p.addParameter('eyeIntensity', 20, @isfloat); % default
-            p.addParameter('Bkgd', 127, @isfloat);
+            p.addParameter('Bkgd', P.bkgd, @isfloat);
             p.addParameter('eyeRadius', 2.0, @isfloat);
             
             p.parse(varargin{:});
@@ -154,8 +155,8 @@ classdef FrameControl < handle
                 obj.eyeColor = uint8(repmat(obj.Bkgd,[1 3])) + ...
                     uint8(obj.eyeIntensity * [1,-1,1]);
             end
-            if (isfield(P,'Bkgd'))
-                obj.Bkgd = P.('Bkgd');
+            if (isfield(P,'bkgd'))
+                obj.Bkgd = P.bkgd;
             end
             if (isfield(P,'eyeRadius'))
                 obj.eyeRadius = P.('eyeRadius');
@@ -351,18 +352,9 @@ classdef FrameControl < handle
                 set(ax2, 'NextPlot', 'Replace');
                 fprintf('FRAME FLIP PLOT: %.4f\n', toc)
 
-                tic
                 ptbFlips = obj.FData(txx, 6) - obj.FData(txx-1, 6);
                 obj.FrameTimingFigure.update(txx, flips, tstates, ptbFlips);
-                fprintf('FRAME FLIP UIFIGURE: %.4f\n', toc)
             end
-            % 
-            % fprintf('REGULAR FLIPS: %.3f +- %.3f\n', ...
-            %     mean(txx(~tstates)), std(txx(~tstates)));
-            % if any(tstates)
-            %     fprintf('TIME SENSITIVE FLIPS: %.3f +- %.3f\n',... 
-            %         mean(txx(tstates)), std(txx(tstates)));
-            % end 
         end
     end 
     

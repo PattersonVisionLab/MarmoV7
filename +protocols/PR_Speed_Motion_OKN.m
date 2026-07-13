@@ -12,17 +12,18 @@ classdef PR_Speed_Motion_OKN < handle
         rewardTime   double = 0;         % store time of last reward
     end
 
-    properties (Access = private)
+    properties (SetAccess = private)
         winPtr; % ptb window
         state           double = 0;      % state counter
         error           double = 0;      % error state in trial
+        %*********
+        hGrating = [];     % marmoview.stimuli.grating
         %*********
         S;              % copy of Settings struct (loaded per trial start)
         P;              % copy of Params struct (loaded per trial)
         trialsList;        % store copy of trial list (not good to keep in S struct)
         %********* stimulus structs for use
         noiseStim = 0;     % which noise stim (if long term duration)
-        hGrating = [];     % marmoview.stimuli.grating
         ori = 0;           % tested orientations
         spatialFreq = 0.2;
         temporalFrequency = 1;      %
@@ -64,7 +65,9 @@ classdef PR_Speed_Motion_OKN < handle
             obj.hGrating = cell(1, P.gratingcycle);
             obj.StimPhase = 1;
             %*********
+            fprintf('Creating stimuli... ');
             for i = 1:P.gratingcycle
+                fprintf('%u  ', i);
                 %******** replace dot field with full-field grating
                 obj.hGrating{1,i} = stimuli.grating(obj.winPtr); 
                 obj.hGrating{1,i}.position = S.centerPix;
@@ -81,6 +84,7 @@ classdef PR_Speed_Motion_OKN < handle
                 %*******
                 obj.hGrating{1,i}.range = P.noiserange;
                 obj.hGrating{1,i}.square = logical(P.squareWave);
+                obj.hGrating{1,i}.dutyCycle = P.dutyCycle;
                 obj.hGrating{1,i}.squareAperture = false;
                 obj.hGrating{1,i}.gauss = true;
                 obj.hGrating{1,i}.bkgd = P.bkgd;
@@ -88,6 +92,7 @@ classdef PR_Speed_Motion_OKN < handle
                 obj.hGrating{1,i}.pixperdeg = S.pixPerDeg;
                 obj.hGrating{1,i}.updateTextures();
             end
+            fprintf('Done\n');
             %****************
         end
 

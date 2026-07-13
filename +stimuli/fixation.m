@@ -14,15 +14,20 @@ classdef fixation < handle
     %   position - center of target (x,y; pixels)
     
     % 16-06-2016 - Shaun L. Cloherty <s.cloherty@ieee.org>
-    
+    % 12-07-2026 - SSP, added switches, descriptions, and cut extra calls
+
     properties 
+        % Diameter of target center, pixels
         cSize = 2; % pixels
+        % Diameter of surround ring for target, pixels
         sSize = 4; % pixels
+        % Extra larger area around target, pixels
         oSize = 8;
-        cColour = zeros([1,3]); 
-        sColour = ones([1,3]);
-        sbColour = zeros([1,3]);
-        position = [0.0, 0.0]; % [x,y] (pixels)
+        cColour = [0 0 0]; 
+        sColour = [1 1 1];
+        sbColour = [0 0 0];
+        % Position on the screen, [x, y] pixels
+        position = [0, 0];
     end
     
     properties (Access = private)
@@ -30,7 +35,7 @@ classdef fixation < handle
     end
     
     methods
-        function obj = fixation(winPtr,varargin)
+        function obj = fixation(winPtr, varargin)
             obj.winPtr = winPtr;
             
             if nargin == 1
@@ -38,15 +43,15 @@ classdef fixation < handle
             end
             
             % initialise input parser
-            p = inputParser;
+            p = inputParser();
             p.StructExpand = true;
             p.CaseSensitive = false;
-            p.addParameter('centreSize',obj.cSize,@isfloat); 
-            p.addParameter('surroundSize',obj.sSize,@isfloat);
-            p.addParameter('centreColour',obj.cColour,@isfloat); 
-            p.addParameter('surroundColour',obj.sColour,@isfloat);
-            p.addParameter('surroundColourBlack',obj.sbColour,@isfloat);
-            p.addParameter('position',obj.position,@isfloat); 
+            p.addParameter('centreSize', obj.cSize, @isfloat); 
+            p.addParameter('surroundSize', obj.sSize, @isfloat);
+            p.addParameter('centreColour', obj.cColour, @isfloat); 
+            p.addParameter('surroundColour',obj.sColour, @isfloat);
+            p.addParameter('surroundColourBlack', obj.sbColour, @isfloat);
+            p.addParameter('position', obj.position, @isfloat); 
             
             try
                 p.parse(varargin{:});
@@ -81,31 +86,28 @@ classdef fixation < handle
     end 
     
     methods 
-        function drawFixation(obj,state)
-            
-            if (state == 1)    %normal black center, white outline
-                r = floor(obj.sSize./2); % radius in pixels
-                rect = kron([1,1], obj.position) + kron(r(:),[-1, -1, +1, +1]);
-                Screen('FillOval', obj.winPtr, obj.sColour,rect');
-                r = floor(obj.cSize./2);
-                rect = kron([1,1],obj.position) + kron(r(:),[-1, -1, +1, +1]);
-                Screen('FillOval', obj.winPtr, obj.cColour, rect');
-            end
-            if (state == 2)   %larger white empty point
-                r = floor(2 * obj.cSize);
-                rect = kron([1,1],obj.position) + kron(r(:),[-1, -1, +1, +1]);
-                Screen('FrameOval',obj.winPtr,obj.sColour,rect',floor(r/4));
-            end
-            if (state == 3)   %all black filled fixation point
-                r = floor(obj.cSize./2);
-                rect = kron([1,1],obj.position) + kron(r(:),[-1, -1, +1, +1]);
-                Screen('FillOval',obj.winPtr,obj.cColour,rect');
-            end
-            if (state == 4)   %larger black empty point
-                r = floor(2 * obj.oSize);
-                rthin = floor( 2 * obj.cSize);
-                rect = kron([1,1],obj.position) + kron(r(:),[-1, -1, +1, +1]);
-                Screen('FrameOval',obj.winPtr,obj.sbColour,rect',floor(rthin/4));
+        function drawFixation(obj, state)
+            switch state
+                case 1  %normal black center, white outline
+                    r = floor(obj.sSize ./ 2); % radius in pixels
+                    rect = kron([1,1], obj.position) + kron(r(:),[-1, -1, +1, +1]);
+                    Screen('FillOval', obj.winPtr, obj.sColour, rect');
+                    r = floor(obj.cSize ./ 2);
+                    rect = kron([1,1],obj.position) + kron(r(:),[-1, -1, +1, +1]);
+                    Screen('FillOval', obj.winPtr, obj.cColour, rect');
+                case 2   %larger white empty point
+                    r = floor(2 * obj.cSize);
+                    rect = kron([1, 1], obj.position) + kron(r(:), [-1, -1, +1, +1]);
+                    Screen('FrameOval', obj.winPtr, obj.sColour, rect', floor(r/4));
+                case 3  %all black filled fixation point
+                    r = floor(obj.cSize ./ 2);
+                    rect = kron([1, 1], obj.position) + kron(r(:),[-1, -1, +1, +1]);
+                    Screen('FillOval', obj.winPtr, obj.cColour, rect');
+                case 4   %larger black empty point
+                    r = floor(2 * obj.oSize);
+                    rthin = floor( 2 * obj.cSize);
+                    rect = kron([1, 1], obj.position) + kron(r(:), [-1, -1, +1, +1]);
+                    Screen('FrameOval', obj.winPtr, obj.sbColour, rect', floor(rthin/4));
             end
         end
     end 

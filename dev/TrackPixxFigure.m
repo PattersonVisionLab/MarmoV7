@@ -23,6 +23,15 @@ classdef TrackPixxFigure < handle
     methods
         function obj = TrackPixxFigure()
             obj.createUi();
+            disp(obj)
+        end
+        
+        function delete(obj)
+            try
+                close(obj.Figure);
+            catch ME
+                warning(ME.identifier, '%s', ME.message);
+            end
         end
 
         function updateUi(obj, tpxData)

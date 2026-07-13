@@ -1,7 +1,15 @@
 classdef PR_AcuityAsh < handle
-    % 
-    % States: 
-    %   7 Move to iti -- inter-trial interval
+% 
+% Stimuli:
+%   Faces       stimuli.gaussimages
+%   hFix        stimuli.fixation
+%   hProbe      stimuli.grating
+%   hChoice     stimuli.circles
+% TODO: closeUp doesn't close faces?
+%
+% States: 
+%   7 Move to iti -- inter-trial interval
+
     
     properties 
         Iti   = 1;              % default Iti duration
@@ -57,21 +65,23 @@ classdef PR_AcuityAsh < handle
             %********** Set-up for trial indexing (required)
             cors = [0,4];  % count these errors as correct trials
             reps = [1,2];  % count these errors like aborts, repeat
+
             obj.trialIndexer = marmoview.TrialIndexer(obj.trialsList, P, cors, reps);
             obj.error = 0;
             
             obj.Faces = stimuli.gaussimages(obj.winPtr,... 
                 'bkgd', S.bgColour,'gray',false);   % color images
             obj.Faces.loadimages(fullfile(getMarmoViewPath(),...
-                'SupportData', 'MarmosetFaceLibrary.mat'));
-            obj.Faces.position = [0,0]*S.pixPerDeg + S.centerPix;
-            obj.Faces.radius = round(P.faceRadius*S.pixPerDeg);
+                'SupportData', 'MarmosetFaceLibrary.mat'));  % uint8
+            obj.Faces.position = [0,0] * S.pixPerDeg + S.centerPix;
+            obj.Faces.radius = round(P.faceRadius * S.pixPerDeg);
             
             %********** Initialize Graphics Objects
             obj.hFix = stimuli.fixation(obj.winPtr);   % fixation stimulus
             obj.hProbe = stimuli.grating(obj.winPtr);  % grating probe
             for k = 1:P.apertures
-                obj.hChoice{k} = stimuli.circles(obj.winPtr); % choice grating, right (vertical)
+                % choice grating, right (vertical)
+                obj.hChoice{k} = stimuli.circles(obj.winPtr); 
                 ango = (((k-1)/P.apertures)*2*pi) + (pi/4);
                 xpos = P.ecc * cos(ango);
                 ypos = P.ecc * sin(ango);
@@ -87,8 +97,13 @@ classdef PR_AcuityAsh < handle
             sz = P.fixPointRadius*S.pixPerDeg;
             obj.hFix.cSize = sz;
             obj.hFix.sSize = 2*sz;
-            obj.hFix.cColour = ones(1,3); % black
-            obj.hFix.sColour = repmat(255,1,3); % white
+            if S.use8Bit
+                obj.hFix.cColour = ones(1,3); % black
+                obj.hFix.sColour = repmat(255,1,3); % white
+            else
+                obj.hFix.cColour = [0 0 0];
+                obj.hFix.sColour = [1 1 1];
+            end
             obj.hFix.position = [0,0]*S.pixPerDeg + S.centerPix;
             obj.hFix.updateTextures();
             
@@ -163,7 +178,8 @@ classdef PR_AcuityAsh < handle
             o.stimTheta = atan2(P.choiceY,P.choiceX);
             
             % Make Gabor stimulus texture
-            o.hProbe(1).position = [(S.centerPix(1) + round(P.xDeg*S.pixPerDeg)),(S.centerPix(2) - round(P.yDeg*S.pixPerDeg))];
+            o.hProbe(1).position = [(S.centerPix(1) + round(P.xDeg*S.pixPerDeg)),...
+                                    (S.centerPix(2) - round(P.yDeg*S.pixPerDeg))];
             o.hProbe(1).radius = round(P.radius*S.pixPerDeg);
             o.hProbe(1).orientation = P.orientation; % vertical for the right
             o.hProbe(1).phase = P.phase;
@@ -612,8 +628,7 @@ classdef PR_AcuityAsh < handle
             ylabel(A.DataPlot3, 'Fraction Corret');
             set(A.DataPlot3, 'XTickLabel',labels);
             axis(A.DataPlot3, [.25 ncpds+.75 0 1]);
-        end
-        
+        end       
     end
     
 end 

@@ -13,6 +13,14 @@ classdef FrameFlipFigure < handle
             obj.createUi();
         end
 
+        function delete(obj)
+            try
+                close(obj.Figure);
+            catch ME
+                warning(ME.identifier, '%s', ME.message);
+            end
+        end
+
         function update(obj, txx, flips, tStates, ptbFlips)
             if nargin < 3 || isempty(tStates)
                 tStates = zeros(size(txx));

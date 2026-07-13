@@ -63,8 +63,13 @@ classdef PR_FixFlash < handle
             sz = P.fixPointRadius*S.pixPerDeg;
             obj.hFix.cSize = sz;
             obj.hFix.sSize = 2*sz;
-            obj.hFix.cColour = ones(1,3); % black
-            obj.hFix.sColour = repmat(255,1,3); % white
+            if S.use8Bit
+                obj.hFix.cColour = ones(1,3); % black
+                obj.hFix.sColour = repmat(255,1,3); % white
+            else
+                obj.hFix.cColour = [0 0 0];
+                obj.hFix.sColour = [1 1 1];
+            end
             obj.hFix.position = [0,0]*S.pixPerDeg + S.centerPix;
             obj.hFix.updateTextures();
             %**********************************
@@ -73,7 +78,7 @@ classdef PR_FixFlash < handle
             obj.NoiseHistory = zeros(obj.MaxFrame,4);   %time, x, y, ori
             %*** Build a set of 8 oriented gratings
             for k = 1:P.OriNum
-                ori = (((k-1)*180)/P.OriNum);
+                ori = (((k-1)*180) / P.OriNum);
                 %********* assign a random start position (not too close to fix)
                 ampo = P.gabMinRadius + (P.gabMaxRadius-P.gabMinRadius)*rand;
                 ango = rand*2*pi;
@@ -84,7 +89,7 @@ classdef PR_FixFlash < handle
                 %*****************
                 obj.hGabor{k} = stimuli.grating(obj.winPtr);
                 obj.hGabor{k}.position = [cX cY];
-                obj.hGabor{k}.radius = round(P.gabRadius*S.pixPerDeg);
+                obj.hGabor{k}.radius = round(P.gabRadius * S.pixPerDeg);
                 obj.hGabor{k}.orientation = ori;
                 obj.hGabor{k}.phase = 0;
                 obj.hGabor{k}.cpd = P.cpd;

@@ -1,12 +1,15 @@
 classdef circles < handle
-    % Matlab class for drawing circles using the psych. toolbox.
-    %
-    % The class constructor can be called with a range of arguments:
-    %
-    %   size     - diameter (pixels)
-    %   weight   - line weight (pixels)
-    %   colour   - line colour (clut index or [r,g,b])
-    %   position - center of aperture (x,y; pixels)
+% Matlab class for drawing circles using the psych. toolbox.
+%
+% The class constructor can be called with a range of arguments:
+%
+%   size     - diameter (pixels)
+%   weight   - line weight (pixels)
+%   colour   - line colour (clut index or [r,g,b])
+%   position - center of aperture (x,y; pixels)
+% 
+% See also:
+%   Screen('FillOval'), Screen('FrameOval')
     
     % 14-06-2016 - Shaun L. Cloherty <s.cloherty@ieee.org>
     % 04-06-2026 - SSP - updated
@@ -14,7 +17,7 @@ classdef circles < handle
     properties
         size        double = 0;             % pixels
         weight      double = 2;             % pixels
-        colour      double = ones([1,3]);   % clut index or [r,g,b]
+        colour      double = [1 1 1];       % clut index or [r,g,b]
         position	double = [0.0, 0.0];    % [x,y] (pixels)
     end
     
@@ -23,7 +26,7 @@ classdef circles < handle
     end
     
     methods
-        function obj = circles(winPtr, varargin) % marmoview's initCmd?
+        function obj = circles(winPtr, varargin) 
             obj.winPtr = winPtr;
             
             if nargin == 1
@@ -44,17 +47,18 @@ classdef circles < handle
             obj.position = ip.Results.position;
         end
         
-        function beforeTrial(~) % marmoview's nextCmd?
+        function beforeTrial(~) 
         end
         
-        function beforeFrame(obj) % Run?
+        function beforeFrame(obj) 
             obj.drawCircles();
         end
         
-        function afterFrame(~) % Run?
+        function afterFrame(~)
         end
         
-        function updateTextures(~)  % no textures for this stimulus
+        function updateTextures(~)  
+            % no textures for this stimulus
         end
         
         function CloseUp(~)
@@ -67,7 +71,7 @@ classdef circles < handle
             
             rect = kron([1,1], obj.position) + kron(r(:), [-1, -1, +1, +1]);
             if obj.weight > 0
-                Screen('FrameOval', obj.winPtr ,obj.colour,rect', obj.weight);
+                Screen('FrameOval', obj.winPtr, obj.colour, rect', obj.weight);
             else
                 Screen('FillOval', obj.winPtr, obj.colour, rect');
             end

@@ -24,7 +24,7 @@ function varargout = MarmoV6(varargin)
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
-    
+
 % Last Modified by GUIDE v2.5 19-Aug-2024 16:32:28
 
     % Begin initialization code - DO NOT EDIT
@@ -38,7 +38,7 @@ function varargout = MarmoV6(varargin)
     if nargin && ischar(varargin{1})
         gui_State.gui_Callback = str2func(varargin{1});
     end
-    
+
     if nargout
         [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
     else
@@ -50,12 +50,12 @@ function varargout = MarmoV6(varargin)
 % --- Executes just before MarmoV6 is made visible.
 function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     % This function has no output args, see OutputFcn.
-    
+
     % Choose default command line output for MarmoV6
     handles.output = hObject;
-    
+
     %%%%% IMPORTANT GROUNDWORK FOR THE GUI IS PLACED HERE %%%%%%%%%%%%%%%%%%%%%
-    
+
     % GET SOME CRUCIAL DIRECTORIES -- THESE DIRECTORIES MUST EXIST!!
     marmoDir = getMarmoViewPath();
     % Present working directory, location of all GUIs
@@ -70,7 +70,7 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     %****** start with no settings file
     handles.settingsFile = 'none';
     set(handles.SettingsFile, 'String', handles.settingsFile);
-    
+
     % AS DEFAULT, THE GUI WILL USE THE CALIBRATION SETTINGS AT THE END OF THE
     % LAST GUI RUN, THIS GUI SUPPORT DATA IS IN THE 'SUPPORT DATA' DIRECTORY,
     % A different calibration file can be loaded, if specified as a field in
@@ -88,23 +88,23 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     % This C structure is never changed until a protocol is cleared or
     % MarmoV6 is exited, until then, it may be reset to the C values using
     % the ResetCalib callback.
-    
+
     % CREATE THE STRUCTURES USED BY ALL PROTOCOLS
     handles.A = struct(); % Values necessary for protocols to run current trial
     handles.S = struct(); % Settings for the protocol, NOT changed while running
     handles.P = struct(); % Parameters for the current protocol, changeable
     handles.SI = handles.S;
     handles.PI = struct;
-    
+
     %****** AT SOME POINT THIS TASK CONTROL MAY INCLUDE EPHYS TIMING WRAPPER
     handles.FC = marmoview.FrameControl();   % create generic task control
-    
+
     % ** LOAD RIG SETTINGS (RELOADED FOR EACH PROTOCOL)
     handles.outputSubject = 'none';
     S = MarmoViewRigSettings();
     S.subject = handles.outputSubject;
     handles.S = S;
-    
+
     %****** if a DummyEye, use mouse and change coordinates
     %****** so the eye is estimated to be where the mouse is located
     if handles.S.DummyEye
@@ -118,12 +118,12 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
         handles.C.c = [cx cy];
         handles.C.rot = 0;
     end
-    
+
     %********** if using the DataPixx, initialize it here
     if (handles.S.DataPixx)
         datapixx.init();
     end
-    
+
     % Load calibration variables into the A structure to be changed if needed
     handles.A = handles.C;
     % Add in the plot handles to A in case handles isn't available
@@ -134,7 +134,7 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     handles.A.DataPlot3 = handles.DataPlot3;
     handles.A.DataPlot4 = handles.DataPlot4;
     handles.A.outputFile = 'none';
-    
+
     % OPEN UP COMMUNICATION WITH THE PUMP FOR REWARD DELIVERY -- THIS IS DONE
     % IMMEDIATELY USING THE RIG SETTINGS, SO THAT JUICE IS AVAILABLE TO THE
     % MARMOSET WHILE NO PROTOCOLS ARE LOADED
@@ -173,22 +173,21 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     % a new protocol and between trials. But it's changed with the give juice
     % button, so best to assign it now
     handles.A.juiceCounter = 0;
-    
+
     % *** Initialize the eye tracker
-    switch handles.S.eyetrackerType 
-        case "Arrington" 
-            handles.eyetrack = marmoview.eyetrack_arrington(hObject,...
-                'EyeDump',S.EyeDump);
-        case "Trackpixx"
+    switch handles.S.eyetrackerType
+        case "Arrington"
+            handles.eyetrack = marmoview.eyetrack_arrington(hObject,'EyeDump',S.EyeDump);
+        case "TrackPixx"
             handles.eyetrack = marmoview.eyetrack_trackpixx(hObject,...
                 'LedIntensity', S.trackpixx_ledIntensity,...
                 'ExpectedIrisSize', S.trackpixx_expectedIrisSize,...
                 'EyeDump',S.EyeDump);
-        otherwise % use mouse pointer
+        otherwise % no eyetrack, use @eyetrack object instead that uses mouse pointer
             handles.eyetrack = marmoview.eyetrack();
     end
-    
-    
+
+
     %********* add the task controller for storing eye movements, flipping
     %********* frames
     % WRITE THE CALIBRATION DATA INTO THE EYE TRACKER PANEL AND GET THE SIZES
@@ -198,7 +197,7 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     UpdateEyeText(handles);
     handles.shiftSize = str2double(get(handles.ShiftSize, 'String'));
     handles.gainSize = str2double(get(handles.GainSize, 'String'));
-    
+
     % THESE VARIABLES CONTROL THE RUN LOOP
     handles.runTask = false;
     handles.stopTask = false;
@@ -206,32 +205,30 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     handles.runOneTrial = false;
     handles.runImage = false;
     handles.lastRunWasImage = false;
-    
+
     % SET ACCESS TO GUI CONTROLS
     set([handles.RunTrial, handles.FlipFrame, handles.ClearSettings], "Enable", "off");
     set([handles.Initialize, handles.PauseTrial], 'Enable','Off');
     set([handles.Background_Image, handles.Calib_Screen], 'Enable', 'on');
     set([handles.ParameterPanel, handles.EyeTrackerPanel,...
         handles.SettingsPanel, handles.TaskPerformancePanel], "Visible", "off");
-    
+
     % Force to select subject name first thing
+    set(handles.StatusText, 'String', 'Please select SUBJECT to begin');
+    set(handles.OutputSubjectEdit, 'String', 'none');
     handles.outputSubject = 'none';
     handles.outputPrefix = [];
     handles.outputDateEdit = [];
     handles.outputSuffixEdit = [];
-    set(handles.OutputSubjectEdit, 'String', 'none');
-    set(handles.OutputPrefixEdit,'Enable','Off');
-    set(handles.OutputDateEdit,'Enable','Off');
-    set(handles.OutputSuffixEdit,'Enable','Off');
-    
-    set(handles.StatusText, 'String', 'Please select SUBJECT to begin');
-    
+    set([handles.OutputPrefixEdit, handles.OutputDateEdit, handles.OutputSuffixEdit],...
+        "Enable", "off");
+
     % For the protocol title, note that no protocol has been loaded yet
     set(handles.ProtocolTitle, 'String', 'No protocol is loaded.');
     % The task light is a neutral gray when no protocol is loaded
     ChangeLight(handles.TaskLight,[.5 .5 .5]);
     UpdateEyeText(handles);
-    
+
     % Update handles structure
     guidata(hObject, handles);
 
@@ -241,7 +238,7 @@ function varargout = MarmoV6_OutputFcn(hObject, eventdata, handles)  %#ok<*INUSL
     % hObject    handle to figure
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
-    
+
     % Get default command line output from handles structure
     varargout{1} = handles.output;
 
@@ -279,7 +276,7 @@ function ChooseSettings_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
     set(handles.StatusText,'String',tstring);
     % Return to task directory
     cd(handles.taskPath);
-    
+
     % Update handles structure
     guidata(hObject, handles);
 
@@ -288,39 +285,38 @@ function ChooseSettings_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
 function Initialize_Callback(hObject, eventdata, handles)
     cprintf('_[0.5,0.1,0.6]', '\tMV6, callback Initialize\n');
     % PREPARE THE GUI FOR INITIALIZING THE PROTOCOL
-    
+
     % Update GUI status
     set(handles.StatusText,'String','Initializing...');
     % The task light is blue only during protocol initialization
     ChangeLight(handles.TaskLight, [.2 .2 1]);
-    
-    
+
     % TURN OFF BUTTONS TO PREVENT FIDDLING DURING INITIALIZATION
     set(handles.ChooseSettings,'Enable','Off');
     set(handles.Initialize,'Enable','Off');
     set(handles.OutputSubjectEdit,'Enable','Off'); % subject already set
     % Effect these changes on the GUI immediately
     guidata(hObject, handles); drawnow;
-    
+
     % GET PROTOCOL SETTINGS
     cd(handles.settingsPath);
     cmd = sprintf('[handles.S,handles.P] = %s;',handles.settingsFile(1:end-2));
     eval(cmd);
     handles.S.subject = handles.outputSubject;
     cd(handles.taskPath);
-    
+
     % MOVE THE GUI OFF OF THE VISUAL STIMULUS SCREEN TO THE CONSOLE SCREEN
     % THIS IS CHANGED IN PROTOCOL SETTINGS AND IS NOT A NECESSARY SETTING
     if isfield(handles.S,'guiLocation')
         set(handles.figure1,'Position',handles.S.guiLocation);
     end
-    
+
     % SHOW THE PROTOCOL TITLE
     set(handles.ProtocolTitle,'String',handles.S.protocolTitle);
-    
+
     % OPEN THE PBT SCREEN
     handles.A = marmoview.openScreen(handles.S, handles.A);
-    
+
     % INITIALIZE THE PROTOCOL
     cmd = sprintf('handles.PR = %s(handles.A.window);',handles.S.protocol_class);
     eval(cmd);   %Establishes the PR object
@@ -330,7 +326,7 @@ function Initialize_Callback(hObject, eventdata, handles)
     %*****************
     handles.PR.initFunc(handles.S, handles.P);
     %***************
-    
+
     % ALSO GENERATE A BACKGROUND IMAGE VIEWER PROTOCOL
     %********* Setup Image Viewer Protocol ******************
     cd(handles.settingsPath);
@@ -341,17 +337,17 @@ function Initialize_Callback(hObject, eventdata, handles)
     handles.PRI.generate_trialsList(handles.SI, handles.PI);
     handles.PRI.initFunc(handles.SI, handles.PI);
     %***************
-    
+
     %*****************************************
-    
+
     % INITIALIZE THE TASK CONTROLLER FOR THE TRIAL
     handles.FC.initialize(handles.A.window, handles.P, handles.C, handles.S);
-    
+
     % SET UP THE OUTPUT PANEL
     % Get the output file name components
     handles.outputPrefix = handles.S.protocol;
-    set(handles.OutputPrefixEdit,'String',handles.outputPrefix);
-    set(handles.OutputSubjectEdit,'String',handles.outputSubject);
+    set(handles.OutputPrefixEdit, 'String', handles.outputPrefix);
+    set(handles.OutputSubjectEdit, 'String', handles.outputSubject);
     handles.outputDate = datestr(now,'ddmmyy');
     set(handles.OutputDateEdit,'String',handles.outputDate);
     i = 0; handles.outputSuffix = '00';
@@ -364,48 +360,42 @@ function Initialize_Callback(hObject, eventdata, handles)
         handles.A.outputFile = strcat(handles.outputPrefix,'_',handles.outputSubject,...
             '_',handles.outputDate,'_',handles.outputSuffix,'.mat');
     end
-    
+
     handles.eyetrack.startfile(handles);
-    
+
     % Show the file name on the GUI
-    set(handles.OutputSuffixEdit,'String',handles.outputSuffix);
-    set(handles.OutputFile,'String',handles.A.outputFile);
+    set(handles.OutputSuffixEdit, 'String', handles.outputSuffix);
+    set(handles.OutputFile, 'String', handles.A.outputFile);
     % Note that a new output file is being used
     handles.A.newOutput = 1;
-    
+
     % SET UP THE PARAMETERS PANEL
     % Trial counting section of the parameters
     handles.A.j = 1; handles.A.finish = handles.S.finish;
     set(handles.TrialCountText,'String',['Trial ' num2str(handles.A.j-1)]);
     set(handles.TrialMaxText,'String',num2str(handles.A.finish));
     set(handles.TrialMaxEdit,'String','');
-    
+
     % pNames are the actual parameter names
     handles.pNames = fieldnames(handles.P);
     % pList is the list of parameter names with values
     handles.pList = cell(size(handles.pNames,1),1);
-    for i = 1:size(handles.pNames,1)
-        pName = handles.pNames{i};
-        tName = sprintf('%s = %2g', pName, handles.P.(pName));
-        handles.pList{i,1} = tName;
-    end
-    set(handles.Parameters, 'String', handles.pList);
+    updateParameterDisplay(handles);
+
     % For the highlighted parameter, provide a description and editable value
     set(handles.Parameters, 'Value', 1);
     set(handles.ParameterText, 'String', handles.S.(handles.pNames{1}));
     set(handles.ParameterEdit, 'String', num2str(handles.P.(handles.pNames{1})));
-    
+
     % UPDATE ACCESS TO CONTROLS
     set([handles.RunTrial, handles.FlipFrame, handles.ClearSettings], "Enable", "on");
     set([handles.OutputPanel, handles.ParameterPanel, handles.EyeTrackerPanel,...
         handles.TaskPerformancePanel], "Visible", "on");
-    set([handles.OutputPrefixEdit, handles.OutputDateEdit, handles.OutputSuffixEdit,...
-        handles.OutputSubjectEdit], 'Enable','off');
+    EnableOutputFileNaming(handles, 'off');
     set([handles.Background_Image, handles.Calib_Screen], 'Enable', 'on');
     set([handles.GraphZoomIn, handles.GraphZoomOut], 'Enable', 'on');
-    
+
     %*******Blank the eyetrace plot
-    tic
     h = handles.EyeTrace;
     eyeRad = handles.eyeTraceRadius;
     set(h,'NextPlot','Replace');
@@ -414,22 +404,21 @@ function Initialize_Callback(hObject, eventdata, handles)
     plot(h,[-eyeRad eyeRad],[0 0],'--','Color',[.5 .5 .5]);
     plot(h,[0 0],[-eyeRad eyeRad],'--','Color',[.5 .5 .5]);
     axis(h,[-eyeRad eyeRad -eyeRad eyeRad]);
-    fprintf('---\nEYETRACE BLANK = %.4f\n---\n', toc);
     %*************************
-    
+
     if handles.S.DummyEye
         EnableEyeCalibration(handles, 'Off');
         set([handles.GraphZoomIn, handles.GraphZoomOut], 'Enable', 'on');
     end
-    
+
     % UPDATE GUI STATUS
     set(handles.StatusText, 'String', 'Protocol is ready to run trials.');
     % Now that a protocol is loaded (but not running), task light is red
     ChangeLight(handles.TaskLight,[1 0 0]);
-    
+
     % FINALLY, RESET THE JUICE COUNTER WHENEVER A NEW PROTOCOL IS LOADED
     handles.A.juiceCounter = 0;
-    
+
     % UPDATE HANDLES STRUCTURE
     guidata(hObject, handles);
     % ---------------------------------------------------------------------
@@ -438,43 +427,46 @@ function Initialize_Callback(hObject, eventdata, handles)
 % UNLOAD CURRENT PROTOCOL, RESET GUI TO INITIAL STATE
 function ClearSettings_Callback(hObject, eventdata, handles)
     cprintf('_[0.5,0.1,0.6]', '\tMV6, callback ClearSettings\n');
-    
+
     % DISABLE RUNNING THINGS WHILE CLEARING
     set([handles.RunTrial, handles.FlipFrame, handles.ClearSettings,...
         handles.Background_Image, handles.Calib_Screen], "Enable", "off");
     set([handles.OutputPanel, handles.ParameterPanel, handles.EyeTrackerPanel,...
         handles.TaskPerformancePanel], "Visible", "off");
-    
+
     % Clear plots
     plot(handles.DataPlot1, 0,0, '+k');
     plot(handles.DataPlot2, 0,0, '+k');
     plot(handles.DataPlot3, 0,0, '+k');
     plot(handles.DataPlot4, 0,0, '+k');
-    
+
     % Eye trace needs to be treated differently to maintain important properties
     plot(handles.EyeTrace, 0, 0, '+k');
     set(handles.EyeTrace, 'UserData', 15); % 15 degrees of visual arc is default
     handles.eyetrack.closefile();
-    
+
     % DE-INITIALIZE PROTOCOL (remove screens or objects created on init)
     handles.PR.closeFunc();  % de-initialize any objects
     handles.PRI.closeFunc(); % close the back-ground image protocol
     handles.lastRunWasImage = false;
-    
+
     % REFORMAT DATA FILES TO CONDENSED STRUCT
     CondenseAppendedData(hObject, handles)
-    
+
     % Close all screens from ptb
     sca;
-    
+
     % Save the eye calibration values at closing time to the MarmoViewLastCalib
-    c = handles.A.c; dx = handles.A.dx; dy = handles.A.dy; rot = handles.A.rot;
+    c = handles.A.c; 
+    dx = handles.A.dx; 
+    dy = handles.A.dy; 
+    rot = handles.A.rot;
     if ~handles.S.DummyEye
         save([handles.supportPath 'MarmoViewLastCalib.mat'], 'c', 'dx', 'dy', 'rot');
     end
-    
+
     handles.C.c = c; handles.C.dx = dx; handles.C.dy = dy; handles.C.rot = rot;
-    
+
     % Create a structure for A that maintains only basic values required
     % outside the protocol
     A = handles.C;
@@ -484,7 +476,7 @@ function ClearSettings_Callback(hObject, eventdata, handles)
     A.DataPlot3 = handles.DataPlot3;
     A.DataPlot4 = handles.DataPlot4;
     A.outputFile = 'none';
-    
+
     % Reset structures
     handles.A = A;
     handles.S = MarmoViewRigSettings();
@@ -496,7 +488,7 @@ function ClearSettings_Callback(hObject, eventdata, handles)
     % return it to default. Also add the juice counter for the juice button.
     handles.A.juiceVolume = handles.reward.volume;
     handles.A.juiceCounter = 0;
-    
+
     if handles.S.rewardType == "Solenoid"
         set(handles.JuiceVolumeText,...
             'String', sprintf('%3i ms',handles.A.juiceVolume*1e3));
@@ -504,7 +496,7 @@ function ClearSettings_Callback(hObject, eventdata, handles)
         set(handles.JuiceVolumeText,...
             'String', sprintf('%3i ul',handles.A.juiceVolume * 1e3));
     end
-    
+
     % RE-ENABLE CONTROLS
     set(handles.ChooseSettings,'Enable','On');
     % Initialize is only available if the settings file exists
@@ -522,41 +514,40 @@ function ClearSettings_Callback(hObject, eventdata, handles)
     set(handles.ProtocolTitle, 'String', 'No protocol is loaded.');
     % The task light is a neutral gray when no protocol is loaded
     ChangeLight(handles.TaskLight, [.5 .5 .5]);
-    
+
     % RE-ENABLE THE SUBJECT ENTRY, in case want to change subject and continue the
     % program without closing MarmoV6 (should be rare)
     set(handles.OutputPanel, 'Visible', 'On');
-    set([handles.OutputPrefixEdit, handles.OutputDateEdit, handles.OutputSuffixEdit],...
-        "enable", "off");
+    EnableOutputFileNaming(handles, 'off');
     set(handles.OutputSubjectEdit, 'Enable', 'On');
-    
+
     % Update handles structure
     guidata(hObject, handles);
 
 
 %% Callbacks: Main loop
 function RunTrial_Callback(hObject, eventdata, handles)
-    
+
     if handles.S.verbose
         cprintf('_[0.5,0.1,0.6]', '\tMV6, callback RunTrial\n');
     end
-    
+
     % SET THE TASK TO RUN
     handles.runTask = true;
-    
+
     if ~handles.runImage
         handles.lastRunWasImage = false;
     else
         handles.lastRunWasImage = true;
     end
     %****************************
-    
+
     % Update UI to reflect task status
     ChangeLight(handles.TaskLight, [0 1 0]);
+    EnableOutputFileNaming(handles, 'off');
     set([handles.RunTrial, handles.FlipFrame, handles.Background_Image,...
-        handles.Calib_Screen, handles.CloseGui, handles.ClearSettings,...
-        handles.OutputPrefixEdit, handles.OutputDateEdit,...
-        handles.OutputSuffixEdit], 'Enable','Off');
+        handles.Calib_Screen, handles.CloseGui, handles.ClearSettings],...
+        'Enable', 'Off');
     set([handles.Parameters, handles.TrialMaxEdit, handles.JuiceVolumeEdit,...
         handles.ChooseSettings, handles.Initialize, handles.ParameterEdit],...
         'Enable','Off');
@@ -571,25 +562,24 @@ function RunTrial_Callback(hObject, eventdata, handles)
         end
         UpdateEyeText(handles);
     else
-        EnableEyeCalibration(handles,'Off');
+        EnableEyeCalibration(handles, 'Off');
         UpdateEyeText(handles);
     end
-    % leave the pause button functioning
     set(handles.PauseTrial, 'Enable', 'On');
-    
+
 
     handles.eyetrack.unpause();
-    
+
     %********************************
-    
+
     % UPDATE GUI STATUS
     set(handles.StatusText, 'String', 'Protocol trials are running.');
-    
+
     % RESET THE JUICER COUNTER BEFORE ENTERING THE RUN LOOP
     handles.A.juiceCounter = 0;
     % UPDATE THE HANDLES
     guidata(hObject, handles); drawnow;
-    
+
     % MOVE TASK RELATED STRUCTURES OUT OF HANDLES FOR THE RUN LOOP -- this way
     % if a callback interrupts the run task function, we can update any changes
     % the interrupting callback makes to handles without affecting those task
@@ -613,18 +603,18 @@ function RunTrial_Callback(hObject, eventdata, handles)
         save(A.outputFile, 'S');     % save settings struct to output file
     end
     cd(handles.taskPath);               % return to task directory
-    
+
     % These are here in case user updated calibration or params while paused
     handles.FC.update_eye_calib(A.c, A.dx, A.dy, A.rot);
-    handles.FC.update_args_from_Pstruct(P);  
-    
-    
+    handles.FC.update_args_from_Pstruct(P);
+
+
     % ----------
     % RUN TRIALS
     % ----------
     CorCount = 0;   % count consecutive correct trials (for BackImage interleaving)
     SetRunBack = 0; % flag for swapping to interleaved image trials and back
-    
+
     while handles.runTask && A.j <= A.finish
         % 'pause', 'drawnow', 'figure', 'getframe', or 'waitfor' will allow
         % other callbacks to interrupt this run task callback -- be aware that
@@ -635,7 +625,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
         % callback, then those changes are lost when this run loop updates that
         % handles. This concept is explained further right below during the
         % nextCmd handles management.
-    
+
         % Check if automatic interleaving of BackImage trials and set the trial
         if isfield(handles.P,'CycleBackImage')
             if handles.P.CycleBackImage > 0
@@ -647,18 +637,18 @@ function RunTrial_Callback(hObject, eventdata, handles)
                 end
             end
         end
-    
+
         % EXECUTE THE NEXT TRIAL COMMAND
         if ~handles.runImage
             P = handles.PR.next_trial(S,P);
         else
             P = handles.PRI.next_trial(S,P);
         end
-    
+
         % Update in case juice volume was set in parameters (TODO, standardize)
         if handles.A.juiceVolume ~= A.juiceVolume
             handles.reward.setVolume(A.juiceVolume);
-            if handles.S.rewardType == "Solenoid"
+            if (handles.S.rewardType == "Solenoid")
                 set(handles.JuiceVolumeText,...
                     'String', sprintf('%3i ms',A.juiceVolume*1e3));
             else
@@ -679,12 +669,12 @@ function RunTrial_Callback(hObject, eventdata, handles)
         % THAT WON'T AFFECT THE CURRENT TRIAL WHICH IS USING 'P', NOT handles.P
         pause(.001); handles = guidata(hObject);
         cprintf('[0.5 0.5 0.5]', '   resume\n');
-    
+
         % -----------------------------
         % EXECUTE THE RUN TRIAL COMMAND
         % -----------------------------
         cprintf('[1 0.2 1]', '\tMV6, prep run trial\n');
-    
+
         %******** IMPLEMENT DEFAULT RUN TRIAL HERE DIRECTLY **********
         %***** Note, PR will refer to the PROTOCOL object ************
         if ~handles.runImage
@@ -695,11 +685,11 @@ function RunTrial_Callback(hObject, eventdata, handles)
         % load values into class for plotting (FP) and to label TimeSensitive
         % states (TS)
         handles.FC.set_task(FP, TS);
-    
+
         % Task Controller flips first frame and logs the trial start
         [ex,ey] = handles.eyetrack.getgaze();
         pupil = handles.eyetrack.getpupil();
-    
+
         % This is where to perform TimeStamp Syncing (start of trial)
         cprintf('[1 0.2 1]', '\tMV6, setting clock\n');
         STARTCLOCK = handles.FC.prep_run_trial([ex,ey],pupil);
@@ -718,7 +708,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
             end
         end
         %**************************************************
-    
+
         if S.eyetrackerType == "Trackpixx"
             handles.eyetrack.unpause();
         end
@@ -734,33 +724,29 @@ function RunTrial_Callback(hObject, eventdata, handles)
         holdrop = 0;
         dropreject = 0;
         %**************
-    
-        if handles.S.verbose
-            cprintf('[1 0.2 1]', '\tMV6, starting run loop\n');
-        end
+
         while runloop
             if ~handles.runImage
                 state = handles.PR.get_state();
             else
                 state = handles.PRI.get_state();
             end
-    
+
             % ------------------
             % GET ON-LINE VALUES
             % -----------------------------------------------------------------
-    
-            %cprintf('[1 0.2 1]', '\tMV6, starting run loop\n');
+
             [ex,ey] = handles.eyetrack.getgaze();
             pupil = handles.eyetrack.getpupil();
             [currentTime, x, y] = handles.FC.grabeye_run_trial(...
                 state, [ex, ey], pupil);
-    
+
             if ~handles.runImage
-                drop = handles.PR.state_and_screen_update(currentTime,x,y);  % return true if drop
+                drop = handles.PR.state_and_screen_update(currentTime, x, y);
             else
-                drop = handles.PRI.state_and_screen_update(currentTime,x,y);
+                drop = handles.PRI.state_and_screen_update(currentTime, x, y);
             end
-    
+
             % One idea, only deliver drop if there is alot of time before the
             % next screen flush (since drop command takes time)
             if drop > 0
@@ -777,12 +763,12 @@ function RunTrial_Callback(hObject, eventdata, handles)
                     dropreject = dropreject + 1;
                 end
             end
-    
+
             % --------------------------------------------------
             % EYE DISPLAY, SCREEN FLIP, GUI UPDATING (if not TS)
             % -----------------------------------------------------------------
             [updateGUI, screenTime] = handles.FC.screen_update_run_trial(state);
-    
+
             if updateGUI
                 drawnow;  % grab the pause button hit
                 % Update any changes made to the calibration
@@ -800,7 +786,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
                 runloop = handles.PRI.continue_run_trial(screenTime);
             end
         end
-    
+
         %******** Update eye trace window before ITI start
         ENDCLOCK = handles.FC.last_screen_flip();   % set screen to gray, trial over, start ITI
         ENDCLOCKTIME = GetSecs();
@@ -808,13 +794,13 @@ function RunTrial_Callback(hObject, eventdata, handles)
         if S.eyetrackerType == "Trackpixx"
             handles.eyetrack.pause();
         end
-    
+
         %******* the data pix strobe will take about 0.5 ms **********
         if (S.DataPixx)
             % send all bits on but first (254) to mark trial end
             datapixx.strobe(62,0);
         end
-    
+
         %****** AGAIN this is a place for timing event to synch up trial ends
         % this takes about 2 ms to send VPX command string
         tstring = sprintf('TRIALENDED:TRIALNO:%5i %2d %2d %2d %2d %2d %2d',...
@@ -822,24 +808,24 @@ function RunTrial_Callback(hObject, eventdata, handles)
         handles.eyetrack.sendcommand(tstring);
         %****** send the rest of the sixlet via DataPixx
         % this sixlet of numbers takes about 2 ms, but not used for time strobe
-        if (S.DataPixx)
+        if S.DataPixx
             for k = 1:6
                 datapixx.strobe(ENDCLOCK(k),0);
             end
         end
         %**********************************************************
-    
+
         % Any final clean-up for PR in the trial, return duration of iti
         if ~handles.runImage
             Iti = handles.PR.end_run_trial();
         else
             Iti = handles.PRI.end_run_trial();
         end
-    
+
         %* --------------------
         %* INTER-TRIAL INTERVAL
         %* ------------------------------------------------------------------------
-    
+
         % PLOT THE EYETRACE and enforce an ITI interval
         itiStart = GetSecs();
         subplot(handles.EyeTrace); hold off;  % clear old plot
@@ -849,17 +835,17 @@ function RunTrial_Callback(hObject, eventdata, handles)
             handles.PRI.plot_trace(handles); hold on;
         end
         handles.FC.plot_eye_trace_and_flips(handles);  %plot the eye traces
-    
+
         while (GetSecs() < (itiStart + Iti))
             drawnow;   % grab GUI events while running ITI interval
             handles = guidata(hObject);
         end
-    
+
         % UPDATE HANDLES FROM ANY CHANGES DURING RUN TRIAL
         guidata(hObject,handles);
         % ALLOW OTHER CALLBACKS INTO THE QUEUE AND UPDATE HANDLES
         pause(.001); handles = guidata(hObject);
-    
+
         % ---------------------
         % CREATE DATA STRUCTURE
         % -------------------------------------------------------------------------
@@ -870,7 +856,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
         D.ENDCLOCK = ENDCLOCK;
         D.STARTCLOCKTIME = STARTCLOCKTIME;
         D.ENDCLOCKTIME = ENDCLOCKTIME;
-    
+
         if ~handles.runImage
             %if critical trial info save as D.PR
             D.PR.name = handles.S.protocol;
@@ -882,27 +868,24 @@ function RunTrial_Callback(hObject, eventdata, handles)
             D.PR.name = 'BackImage';
             D.PR = handles.PRI.end_plots(P,A);
         end
-    
-    
+
         if handles.S.eyetrackerType == "Trackpixx"
             D.TPxData = handles.eyetrack.getDataOnBuffer();
-            try
-                handles.FC.updateTpxPlot(D.TPxData);
-            catch ME
-                warning(ME.identifier, '%s', ME.message);
-            end
+            fprintf('%u total: %.2f left eye, %.2f right eye\n', height(D.TPxData),...
+                100*nnz(~isnan(D.TPxData.LeftEyeRawX)) / height(D.TPxData),...
+                100*nnz(~isnan(D.TPxData.RightEyeRawX)) / height(D.TPxData));
         else
             D.TPxData = [];
         end
         D.eyeData = handles.FC.upload_eyeData();
         [c,dx,dy,rot] = handles.FC.upload_C();
         D.c = c; D.dx = dx; D.dy = dy; D.rot = rot;
-    
+
         % log: 1) time of juice pulses, 2) supplementary juice, 3) volume
         D.rewardtimes = rewardtimes;
         D.juiceButtonCount = handles.A.juiceCounter;
         D.juiceVolume = A.juiceVolume;  %#ok<STRNU>
-    
+
         % -------------
         % SAVE THE DATA
         % ---------------------------------------------------------------------
@@ -911,27 +894,27 @@ function RunTrial_Callback(hObject, eventdata, handles)
         Dstring = sprintf('D%d', A.j);
         cprintf('*[1 0.2 0.5]', 'eval cmd is %s = D\n', Dstring);
         eval(sprintf('%s = D;',Dstring));   % set variable
-    
+
         % append file
         save(A.outputFile, '-append', 'S', Dstring);
-    
+
         cd(handles.taskPath);               % return to task directory
         eval(sprintf('clear %s;',Dstring));
         clear D;                 % release the memory for D once saved
-    
+
         %******************************************************************
         %************** END OF THE TRIAL DATA SECTION *********************
         %******************************************************************
-    
+
         % Update trial count
         A.j = A.j+1;
         set(handles.TrialCountText, 'String', num2str(A.j-1));
-    
+
         if ~handles.runOneTrial
             A.finish = handles.A.finish;
             set(handles.TrialMaxText, 'String', num2str(A.finish));
         end
-    
+
         % Check for updates in juice volume during trial
         if handles.A.juiceVolume ~= A.juiceVolume
             if handles.S.rewardType == "NewEra"
@@ -943,7 +926,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
                 set(handles.JuiceVolumeText, 'String', [num2str(A.juiceVolume) ' ul']);
             end
         end
-    
+
         % UPDATE THE TASK RELATED STRUCTURES IN CASE OF LEAVING THE RUN LOOP
         handles.A = A;
         if ~handles.runImage
@@ -953,7 +936,7 @@ function RunTrial_Callback(hObject, eventdata, handles)
             handles.SI = S;
             handles.PI = P;
         end
-    
+
         % If it was an interleave Image trial, set it back proper
         if SetRunBack == 1
             handles.runImage = false;
@@ -963,15 +946,10 @@ function RunTrial_Callback(hObject, eventdata, handles)
             CorCount = 0;
         end
         %************************************
-    
+
         % UPDATE THE PARAMETER LIST TO SHOW THE NEXT TRIAL PARAMETERS
-        for i = 1:size(handles.pNames,1)
-            pName = handles.pNames{i};
-            tName = sprintf('%s = %2g',pName,handles.P.(pName));
-            handles.pList{i,1} = tName;
-        end
-        set(handles.Parameters,'String',handles.pList);
-    
+        updateParameterDisplay(handles);
+
         % UPDATE THE HANDLES STRUCTURE FROM ALL OF THESE CHANGES
         guidata(hObject,handles);
         % ALLOW OTHER CALLBACKS INTO THE THE QUEUE. IF PARAMETERS ARE CHANGED BY
@@ -980,36 +958,31 @@ function RunTrial_Callback(hObject, eventdata, handles)
         % NEXT TRIAL. IF YOU EXIT THE LOOP, THOUGH, THEN P WILL BE UPDATED BY WILL
         % BE UPDATED BY ANY CHANGES TO THE HANDLES
         pause(.001); handles = guidata(hObject);
-    
+
         % STOP RUN TASK IF SET TO DO SO
         if handles.stopTask || handles.runOneTrial
             handles.runTask = false;
         end
     end
-    
+
     %************************ LOOP IS COMPLETE ****************************
-    
+
     % PAUSE THE EYETRACKER
     handles.eyetrack.pause();
-    
+
     % NO TASK RUNNING FLAGS SHOULD BE ON ANYMORE
     handles.runTask = false;
     handles.stopTask = false;
-    
+
     % UPDATE THE PARAMETERS LIST IN CASE OF ANY CHANGES MADE AFTER RUNNING THE
     % END TRIAL COMMAND
-    for i = 1:size(handles.pNames,1)
-        pName = handles.pNames{i};
-        tName = sprintf('%s = %2g',pName,handles.P.(pName));
-        handles.pList{i,1} = tName;
-    end
-    set(handles.Parameters,'String',handles.pList);
-    
+    updateParameterDisplay(handles);
+
     % Turn GUI back on...
     ChangeLight(handles.TaskLight, [0 1 0]);
+    EnableOutputFileNaming(handles, 'on');
     set([handles.RunTrial, handles.FlipFrame, handles.Background_Image,...
-        handles.Calib_Screen, handles.CloseGui, handles.ClearSettings,...
-        handles.OutputPrefixEdit, handles.OutputDateEdit, handles.OutputSuffixEdit],...
+        handles.Calib_Screen, handles.CloseGui, handles.ClearSettings],...
         'Enable', 'On');
     set([handles.Parameters, handles.TrialMaxEdit, handles.JuiceVolumeEdit,...
         handles.ChooseSettings, handles.Initialize, handles.ParameterEdit],...
@@ -1022,10 +995,10 @@ function RunTrial_Callback(hObject, eventdata, handles)
     % Done and ready for another protocol
     ChangeLight(handles.TaskLight,[1 0 0]);
     set(handles.StatusText, 'String', 'Protocol is ready to run trials.');
-    
+
     guidata(hObject,handles);
-    
-%% Callbacks: Trial control    
+
+%% Callbacks: Trial control
 % STOP THE TRIAL LOOP ONCE THE CURRENT TRIAL HAS COMPLETED
 function PauseTrial_Callback(hObject, eventdata, handles)
     % Pause button can also act as an unpause button
@@ -1034,10 +1007,10 @@ function PauseTrial_Callback(hObject, eventdata, handles)
         % SET TASK LIGHT TO ORANGE
         ChangeLight(handles.TaskLight, [.9 .7 .2]);
     end
-    
+
     guidata(hObject,handles);
 
-    
+
 % GIVE A JUICE REWARD
 function GiveJuice_Callback(hObject, eventdata, handles)
     handles.reward.deliver();
@@ -1048,9 +1021,9 @@ function GiveJuice_Callback(hObject, eventdata, handles)
 % CHANGE THE SIZE OF THE JUICE REWARD TO BE DELIVERED
 function JuiceVolumeEdit_Callback(hObject, eventdata, handles)
     % Volume is entered in microliters, classes take milliliters
-    vol = get(hObject, 'String'); 
-    volML = str2double(vol) / 1e3; 
-    handles.reward.setVolume(volML); 
+    vol = get(hObject, 'String');
+    volML = str2double(vol) / 1e3;
+    handles.reward.setVolume(volML);
     if handles.S.rewardType == "Solenoid"
         set(handles.JuiceVolumeText, 'String', [vol ' ms']);
     else
@@ -1058,7 +1031,7 @@ function JuiceVolumeEdit_Callback(hObject, eventdata, handles)
     end
     set(hObject, 'String', '');
     % A.juiceVolume should *always* be in milliliters!
-    handles.A.juiceVolume = volML; 
+    handles.A.juiceVolume = volML;
     guidata(hObject,handles);
 
 
@@ -1066,7 +1039,12 @@ function JuiceVolumeEdit_Callback(hObject, eventdata, handles)
 function FlipFrame_Callback(hObject, eventdata, handles)
     % If a bkgd parameter exists, flip frame with background color value
     if isfield(handles.P, 'bkgd')
-        Screen('FillRect', handles.A.window, uint8(handles.P.bkgd));
+        if handles.S.use8Bit
+            bkgd = uint8(handles.P.bkgd);
+        else
+            bkgd = handles.P.bkgd;
+        end
+        Screen('FillRect', handles.A.window, bkgd);
     end
     Screen('Flip', handles.A.window);
 
@@ -1094,7 +1072,7 @@ function ParameterEdit_Callback(hObject, eventdata, handles)
         % Update the parameter list immediately if not in the run loop
         if ~handles.runTask
             tName = sprintf('%s = %2g',pName,handles.P.(pName));
-            handles.pList{get(handles.Parameters,'Value')} = tName;
+            handles.pList{get(handles.Parameters, 'Value')} = tName;
             set(handles.Parameters,'String',handles.pList);
         end
     else
@@ -1102,7 +1080,7 @@ function ParameterEdit_Callback(hObject, eventdata, handles)
         set(hObject,'String',num2str(handles.P.(pName)));
     end
     % Update handles structure
-    guidata(hObject,handles);           
+    guidata(hObject,handles);
 
 function TrialMaxEdit_Callback(hObject, eventdata, handles)
     % Get the new count
@@ -1116,7 +1094,7 @@ function TrialMaxEdit_Callback(hObject, eventdata, handles)
     end
     % Clear the edit string
     set(hObject,'String','');
-    
+
     % Update handles structure
     guidata(hObject,handles);
 
@@ -1207,6 +1185,7 @@ function RotationAngleText_Callback(hObject, eventdata, handles)
     UpdateEyeText(handles);
     UpdateEyePlot(handles);
 
+%% UICONTROL CREATE FUNCTIONS
 function RotationAngleText_CreateFcn(hObject, eventdata, handles)
 function ShiftSize_CreateFcn(hObject, eventdata, handles)
 function GainSize_CreateFcn(hObject, eventdata, handles)
@@ -1219,7 +1198,7 @@ function OutputSubjectEdit_CreateFcn(hObject, eventdata, handles)
 function OutputDateEdit_CreateFcn(hObject, eventdata, handles)
 function JuiceVolumeEdit_CreateFcn(hObject, eventdata, handles)
 
-%% OUTPUT PANEL CALLBACKS 
+%% OUTPUT PANEL CALLBACKS
 function OutputPrefixEdit_Callback(hObject, eventdata, handles)
     handles.outputPrefix = get(hObject,'String');
     handles = UpdateOutputFilename(handles);
@@ -1245,16 +1224,16 @@ function OutputSuffixEdit_Callback(hObject, eventdata, handles)
 function CloseGui_Callback(hObject, eventdata, handles)
     % Close Psychtoolbox screens
     Screen('Close'); sca;
-    
+
     % If Data File Open, condense appended D's into one struct ****
     CondenseAppendedData(hObject,handles);
-    
+
     % Save any changes to the calibration
     c = handles.A.c; dx = handles.A.dx; dy = handles.A.dy; rot = handles.A.rot;
     if ~handles.S.DummyEye
         save([handles.supportPath 'MarmoViewLastCalib.mat'],'c','dx','dy','rot');
     end
-    
+
     % Close the pump
     handles.reward.report()
     if handles.S.rewardType == "Kinesis"
@@ -1262,29 +1241,30 @@ function CloseGui_Callback(hObject, eventdata, handles)
     end
     delete(handles.reward);
     handles.reward = NaN;
-    
+
     % Close the trackpixx
+    % TODO: This should be in trackpixx class
     if handles.S.eyetrackerType == "Trackpixx" && handles.eyetrack.isAwake
         status = Datapixx('GetTPxStatus');
         toRead = status.newBufferFrames;
         if toRead > 0
             cprintf('_[0.5,0.5,0.5]', 'Closing MView, clearing %u frames on buffer\n', toRead);
-    
+
             Datapixx('ReadTPxData', toRead);
         end
         Datapixx('SetTpxSleep');
         Datapixx('RegWrRd');
     end
-    
+
     % Close the datapixx
     if handles.S.DataPixx
         datapixx.close();
     end
-    
+
     % Close the gui window
     close(handles.figure1);
 
-%% AUXILLIARY FUNCTIONS 
+%% AUXILLIARY FUNCTIONS
 function ChangeLight(h, newColor)
     scatter(h, .5, .5, 600,...
         'o', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', newColor);
@@ -1314,10 +1294,10 @@ function UpdateEyePlot(handles)
 function handles = UpdateOutputFilename(handles)
     % Generate the file name
     if (~isempty(handles.outputPrefix) && ~isempty(handles.outputSubject) && ...
-            ~isempty(handles.outputDate) && ~isempty(handles.outputSuffix) )
+            ~isempty(handles.outputDateEdit) && ~isempty(handles.outputSuffixEdit) )
         handles.A.outputFile = strcat(handles.outputPrefix,'_',handles.outputSubject,...
             '_',handles.outputDate,'_',handles.outputSuffix,'.mat');
-        set(handles.OutputFile,'String',handles.A.outputFile);
+        set(handles.OutputFile, 'String',handles.A.outputFile);
         % If the file name already exists, provide a warning that data will be
         % overwritten
         if exist([handles.outputPath handles.A.outputFile],'file')
@@ -1362,6 +1342,12 @@ function EnableEyeCalibration(handles,state)
     set(handles.GraphZoomIn,'Enable',state);
     set(handles.GraphZoomOut,'Enable',state);
 
+% --- Toggles controls related to output specification
+function EnableOutputFileNaming(handles, state)
+    set(handles.OutputPrefixEdit, 'Enable', state);
+    set(handles.OutputDateEdit, 'Enable', state);
+    set(handles.OutputSuffixEdit, 'Enable', state);
+
 % --- Executes on button press in Calib_Screen.
 function Calib_Screen_Callback(hObject, eventdata, handles)
     % If a bkgd parameter exists, flip frame with background color value
@@ -1394,7 +1380,7 @@ function Background_Image_Callback(hObject, eventdata, handles)
     % it appears if handles changed, you need to regrab it
     % what lives in this function is the old copy of it
     handles = guidata(hObject);
-    
+
     handles.runImage = false;
     handles.runOneTrial = false;
     guidata(hObject,handles);
@@ -1406,8 +1392,8 @@ function GraphZoomIn_Callback(hObject, eventdata, handles)
     end
     guidata(hObject,handles);
     UpdateEyePlot(handles);
-    
-    
+
+
 % --- Executes on button press in GraphZoomOut.
 function GraphZoomOut_Callback(hObject, eventdata, handles)
     if handles.eyeTraceRadius < 30
@@ -1415,8 +1401,24 @@ function GraphZoomOut_Callback(hObject, eventdata, handles)
     end
     guidata(hObject,handles);
     UpdateEyePlot(handles);
-    
-    
+
+function updateVolumeDisplay(gObj, S, vol)
+    % Takes handle to graphics object, settings, and volume
+    vol = sprintf('%3i', vol);
+    if handles.S.rewardType == "Solenoid"
+        set(gObj, 'String', [vol ' ms']);
+    else
+        set(gObj, 'String', [vol ' ul']);
+    end
+
+function updateParameterDisplay(handles)
+    for i = 1:size(handles.pNames,1)
+        pName = handles.pNames{i};
+        tName = sprintf('%s = %2g', pName,handles.P.(pName));
+        handles.pList{i, 1} = tName;
+    end
+    set(handles.Parameters, 'String', handles.pList);
+
 % --- Executes on button press in Refresh_Trials.
 function Refresh_Trials_Callback(hObject, eventdata, handles)
     %REBUILD A NEW TRIALS LIST FROM CURRENT PARAMS
@@ -1424,7 +1426,9 @@ function Refresh_Trials_Callback(hObject, eventdata, handles)
     % DE-INITIALIZE OBJECTS (may need to make new if Param changed)
     handles.PR.closeFunc();
     % RE-INITIALIZE OBJECTS (may need to make new if Param changed)
+    fprintf('Initializing protocol...'); % Bc this can take time
     handles.PR.initFunc(handles.S,handles.P);
+    fprintf('Done\n');
     %******* load changes in handles back to the GUI
     guidata(hObject,handles);
 
@@ -1433,9 +1437,9 @@ function CondenseAppendedData(hObject, handles)
     % We store trial by trial data while running but before closing, we
     % condense it back to a single D struct. NOTE: if MarmoView hangs or
     % crashes, you would still be able to call this routine on what is saved
-    
+
     guidata(hObject,handles); drawnow;
-    
+
     A = handles.A;   % get the A struct (carries output file names)
     %******* go to outputPath and load current data
     if strcmp(A.outputFile, 'none')  % could be in state with no open file

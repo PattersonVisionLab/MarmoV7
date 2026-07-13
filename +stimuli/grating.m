@@ -24,6 +24,8 @@ classdef grating < handle
         % Grating phase in degrees
         phase           double = 0;  
         square          logical = false;
+        % Fraction of the cycle that is "bright"
+        dutyCycle       double = 0.5;
         squareAperture  logical = false;
         ring            logical = false;
         % Background intensity (normalized, 0-1)
@@ -68,6 +70,7 @@ classdef grating < handle
             p.addParameter('cpd2', obj.cpd2, @isfloat);
             p.addParameter('phase', obj.phase, @isfloat);
             p.addParameter('square', obj.square, @islogical);
+            p.addParameter('dutyCycle', obj.dutyCycle, @isfloat);
             p.addParameter('ring', obj.square, @islogical);
             p.addParameter('gauss', obj.gauss, @islogical);
             p.addParameter('bkgd', obj.bkgd, @isfloat);
@@ -81,18 +84,10 @@ classdef grating < handle
                 return;
             end
 
-            obj.position = p.Results.position;
-            obj.radius = p.Results.radius;
-            obj.orientation = p.Results.orientation;
-            obj.cpd = p.Results.cpd;
-            obj.cpd2 = p.Results.cpd2;
-            obj.phase = p.Results.phase;
-            obj.square = p.Results.square;
-            obj.ring = p.Results.ring;
-            obj.gauss = p.Results.gauss;
-            obj.bkgd = p.Results.bkgd;
-            obj.range = p.Results.range;
-            obj.pixperdeg = p.Results.pixperdeg;
+            f = fieldnames(p.Results);
+            for i = 1:numel(f)
+                obj.(f{i}) = p.Results(f{i});
+            end
         end
 
         function beforeTrial(obj) %#ok<MANU>
@@ -151,8 +146,14 @@ classdef grating < handle
             %*********
             % Filter for square wave
             if (obj.square)
-                s1( s1 > 0 ) = 1;
-                s1( s1 < 0 ) = -1;
+                if obj.dutyCycle == 0.5
+                    s1( s1 > 0 ) = 1;
+                    s1( s1 < 0 ) = -1;
+                else
+                    dutyCycleThreshold = cos(pi * obj.dutyCycle);
+                    s1( s1 > dutyCycleThreshold ) = 1;
+                    s1( s1 <= dutyCycleThreshold ) = -1;
+                end
             end
             if ~isinf(obj.radius)
                 if (obj.squareAperture)

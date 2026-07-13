@@ -36,7 +36,7 @@ classdef PR_FaceCal < handle
         
         function initFunc(obj, S, ~)
             obj.Faces = stimuli.gaussimages(obj.winPtr,... 
-                'bkgd', S.bgColour, 'gray', false);   % color images
+                'bkgd', S.bgColour, 'gray', false);   % uint8, color images
             marmoPath = getMarmoViewPath();
             obj.Faces.loadimages(fullfile(marmoPath, ...
                 'SupportData', 'MarmosetFaceLibrary.mat'));
@@ -116,14 +116,14 @@ classdef PR_FaceCal < handle
             %******* THIS PART CHANGES WITH EACH PROTOCOL ****************
             if obj.state == 0 && currentTime > obj.startTime + obj.P.faceDur
                 obj.state = 1; % Inter trial interval
-                obj.faceOff = GetSecs;
+                obj.faceOff = GetSecs();
                 drop = 1;
                  cprintf('_[0.5,0.5,0.5]', '\tProtocol, give reward\n');
             end
             % GET THE DISPLAY READY FOR THE NEXT FLIP, STATE SPECIFIC DRAWS
             switch obj.state
                 case 0
-                    Screen('DrawTextures',obj.winPtr,obj.texList,obj.texRects,obj.winRects)
+                    Screen('DrawTextures', obj.winPtr, obj.texList, obj.texRects, obj.winRects)
             end
             %**************************************************************
         end
