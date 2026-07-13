@@ -24,11 +24,11 @@ end
 
 % NEW COMMANDS TO INTEGRATE LATER
 
-onrig = false;
+onrig = true;
 if onrig
     S.DataPixx = true;
     % string: Kinesis, NewEra, Solenoid, None
-    S.rewardType = "Kinesis";   
+    S.rewardType = "None";   
     % string: "Trackpixx", "Eyelink", "Arrington", "Mouse"
     S.eyetrackerType = "Trackpixx"; 
     S.DummyEye = false;         % use mouse instead of eye tracker
