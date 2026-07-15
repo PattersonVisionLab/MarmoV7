@@ -50,16 +50,12 @@ S.calibFilename = 'MarmoViewLastCalib.mat';
 % Stimulus settings
 P.eyeRadius = 2.0;
 S.eyeRadius = 'Gaze indicator radius (degrees):';
-P.eyeIntensity = 20;
+P.eyeIntensity = 0.12;
 S.eyeIntensity = 'Indicator intensity:';
 P.showEye = 0;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
-P.bkgd = 127;
-S.bkgd = 'Choose the background color (0-255):';
-if ~S.use8Bit
-    P.bkgd = P.bkgd/255;
-    P.eyeIntensity = P.eyeIntensity/255;
-end
+P.bkgd = 0.5;
+S.bkgd = 'Choose the background color (0-1):';
 
 % Trial timing
 P.imageDur = 10;

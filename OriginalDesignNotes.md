@@ -66,3 +66,13 @@ Misc notes:
     Also start a juice counter, for now at 0 -- It will be reset upon loading
     a new protocol and between trials. But it's changed with the give juice
     button, so best to assign it now
+
+**Before setting reward volume**
+
+
+    TYPICALLY, I PREFER TO HANDLES LARGER/SMALLER REWARDS BY NUMBER OF PULSES
+    INSTEAD OF CHANGING THE VOLUME, ALTHOUGH THE VOLUME CAN BE CHANGED, I
+    SUGGEST ONLY USING A NUMBER OF JUICE PULSE PARAMETER FOR PROTOCOLS.
+    !!!IF YOU DO CHANGE JUICE VOLUME, MAKE SURE THE PUMP IS GIVEN TIME TO
+    DELIVER EACH PULSE BEFORE STARTING ON THE NEXT ONE, IT TAKES LONGER TO
+    DELIVER A BIG JUICE PULSE THAN A SMALL ONE!!!

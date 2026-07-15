@@ -1,6 +1,7 @@
 % core task controller
 % 8-30-2018 - Jude Mitchell
-% TODO: This is setting background but does not know about settings file and protocol file
+% TODO: This is setting background but does not know about the other places 
+% where background might be defined (settings file and protocol file)
 
 classdef FrameControl < handle
     %
@@ -50,17 +51,18 @@ classdef FrameControl < handle
         FP;         % know how to plot eye traces (supplied from Run)
     end 
     
+    % These are all defined elsewhere and the defaults here worry me
     properties 
         showEye = 0;
-        eyeIntensity = 20;
-        Bkgd = 127;       % FIXME need to know for screen flip
-        eyeRadius = 2.0;  % of screen pointer
+        eyeIntensity = 0.08;
+        Bkgd = 0.5;       % FIXME need to know for screen flip
+        eyeRadius = 2.0;  
         centerPix = [0,0];
         pixPerDeg = 30;
         frameRate = 60;
     end
 
-    properties
+    properties (Hidden)
         FrameTimingFigure
         TpxFigure
     end
@@ -88,7 +90,6 @@ classdef FrameControl < handle
     end 
     
     methods (Access = public)
-        
         function obj = initialize(obj, winPtr, P, C, S, varargin)
             cprintf('_Comments', '\tFrameControl, call initialize\n');
            
@@ -138,30 +139,34 @@ classdef FrameControl < handle
             % Color for gaze indicator color, % purple, replace later
             obj.eyeColor = uint8(repmat(obj.Bkgd,[1 3])) + ...
                            uint8(obj.eyeIntensity * [1,-1,1]);
+            obj.eyeColor = double(obj.eyeColor) / 255;
 
-            obj.FrameTimingFigure = FrameFlipFigure();
-            obj.TpxFigure = TrackPixxFigure();
+            S = MarmoViewRigSettings();  % TODO revisit this approach 
+            if S.eyetrackerType == "Trackpixx"
+                obj.TpxFigure = TrackPixxFigure();
+            end
+            %if S.showFrameFlipFigure
+            %    obj.FrameTimingFigure = FrameFlipFigure();
+            %end
         end
         
         function update_args_from_Pstruct(obj, P)
             % NOTE, these arguments could load from the Pinit as well
             %cprintf('_Comments', '\tFrameControl, call updateArgsFromPStruct =');
-            tic 
             if (isfield(P, 'showEye'))
-                obj.showEye = P.('showEye');
+                obj.showEye = P.showEye;
             end
             if (isfield(P,'eyeIntensity'))
-                obj.eyeIntensity = P.('eyeIntensity');
-                obj.eyeColor = uint8(repmat(obj.Bkgd,[1 3])) + ...
-                    uint8(obj.eyeIntensity * [1,-1,1]);
+                obj.eyeIntensity = P.eyeIntensity;
+                eyeRGB = repmat(obj.Bkgd,[1 3]) + ...
+                    obj.eyeIntensity * [1,-1,1];
             end
             if (isfield(P,'bkgd'))
                 obj.Bkgd = P.bkgd;
             end
             if (isfield(P,'eyeRadius'))
-                obj.eyeRadius = P.('eyeRadius');
+                obj.eyeRadius = P.eyeRadius;
             end
-            fprintf('%.4f ms\n', 1000*toc)  % max 1.6 ms for isfield checks
         end
         
         function set_task(obj, FP, TS)    
@@ -218,6 +223,9 @@ classdef FrameControl < handle
             %cprintf('_Comments', '\tFrameControl, call grabEyeRunTrial\n');
             currentTime = GetSecs();
 
+            if isempty(obj.FCount)
+                obj.FCount = 0;
+            end
             obj.FCount = obj.FCount + 1;
             k = obj.FCount;
             if (k <= obj.FMAX)  %drops data if over max
@@ -291,7 +299,9 @@ classdef FrameControl < handle
         end
 
         function updateTpxPlot(obj, tpxData)
-            obj.TpxFigure.updateUi(tpxData);
+            if ~isempty(obj.TpxFigure)
+                obj.TpxFigure.updateUi(tpxData);
+            end
         end
         
         function plot_eye_trace_and_flips(obj, handles)
@@ -352,8 +362,10 @@ classdef FrameControl < handle
                 set(ax2, 'NextPlot', 'Replace');
                 fprintf('FRAME FLIP PLOT: %.4f\n', toc)
 
-                ptbFlips = obj.FData(txx, 6) - obj.FData(txx-1, 6);
-                obj.FrameTimingFigure.update(txx, flips, tstates, ptbFlips);
+                if ~isempty(obj.FrameTimingFigure)
+                    ptbFlips = obj.FData(txx, 6) - obj.FData(txx-1, 6);
+                    obj.FrameTimingFigure.update(txx, flips, tstates, ptbFlips);
+                end
             end
         end
     end 

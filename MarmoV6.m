@@ -1,24 +1,23 @@
 function varargout = MarmoV6(varargin)
-% MARMOV6 M-file for MarmoV6.fig
+% MARMOV7 M-file for MarmoV7.fig
 % Patterson lab trackpixx version (to be MarmoV7 at some point)
 %
-%      THIS IS MARMOV6 VERSION 1C, THIS CORRESPONDS TO THE VERSION TEXT
-%      IN THE MarmoV6.fig FILE
+%      THIS IS MARMOV7 VERSION 1A
 %
-%      MARMOV6, by itself, creates a new MARMOV6 or raises the existing
+%      MARMOV7, by itself, creates a new MARMOV7 or raises the existing
 %      singleton*.
 %
-%      H = MARMOV6 returns the handle to a new MARMOV6 or the handle to
+%      H = MARMOV7 returns the handle to a new MARMOV7 or the handle to
 %      the existing singleton*.
 %
-%      MARMOV6('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in MARMOV6.M with the given input arguments.
+%      MARMOV7('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in MARMOV7.M with the given input arguments.
 %
-%      MARMOV6('Property','Value',...) creates a new MARMOV6 or raises the
+%      MARMOV7('Property','Value',...) creates a new MARMOV7 or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before MarmoV6_OpeningFcn gets called.  An
+%      applied to the GUI before MARMOV7_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to MarmoV6_OpeningFcn via varargin.
+%      stop.  All inputs are passed to MARMOV7_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
@@ -47,11 +46,11 @@ function varargout = MarmoV6(varargin)
     % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before MarmoV6 is made visible.
+% --- Executes just before MarmoV7 is made visible.
 function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     % This function has no output args, see OutputFcn.
 
-    % Choose default command line output for MarmoV6
+    % Choose default command line output for MarmoV7
     handles.output = hObject;
 
     %%%%% IMPORTANT GROUNDWORK FOR THE GUI IS PLACED HERE %%%%%%%%%%%%%%%%%%%%%
@@ -64,7 +63,7 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     handles.settingsPath = sprintf('%s/Settings/',marmoDir);
     % Output directory, all data will be saved here!
     handles.outputPath = sprintf('%s/Output/',marmoDir);
-    % Support data directory, data to support MarmoV6 or its protocols can be
+    % Support data directory, data to support MarmoV7 or its protocols can be
     % kept here unintrusively (e.g. eye calibration values or marmoset images)
     handles.supportPath = sprintf('%s/SupportData/',marmoDir);
     %****** start with no settings file
@@ -86,7 +85,7 @@ function MarmoV6_OpeningFcn(hObject, eventdata, handles, varargin)
     handles.C = calStruct;
     handles.eyeTraceRadius = 15;
     % This C structure is never changed until a protocol is cleared or
-    % MarmoV6 is exited, until then, it may be reset to the C values using
+    % MarmoV7 is exited, until then, it may be reset to the C values using
     % the ResetCalib callback.
 
     % CREATE THE STRUCTURES USED BY ALL PROTOCOLS
@@ -515,8 +514,8 @@ function ClearSettings_Callback(hObject, eventdata, handles)
     % The task light is a neutral gray when no protocol is loaded
     ChangeLight(handles.TaskLight, [.5 .5 .5]);
 
-    % RE-ENABLE THE SUBJECT ENTRY, in case want to change subject and continue the
-    % program without closing MarmoV6 (should be rare)
+    % RE-ENABLE THE SUBJECT ENTRY, in case want to change subject and continue 
+    % the program without closing MarmoV7 (should be rare)
     set(handles.OutputPanel, 'Visible', 'On');
     EnableOutputFileNaming(handles, 'off');
     set(handles.OutputSubjectEdit, 'Enable', 'On');
@@ -1039,11 +1038,7 @@ function JuiceVolumeEdit_Callback(hObject, eventdata, handles)
 function FlipFrame_Callback(hObject, eventdata, handles)
     % If a bkgd parameter exists, flip frame with background color value
     if isfield(handles.P, 'bkgd')
-        if handles.S.use8Bit
-            bkgd = uint8(handles.P.bkgd);
-        else
-            bkgd = handles.P.bkgd;
-        end
+        bkgd = handles.P.bkgd;
         Screen('FillRect', handles.A.window, bkgd);
     end
     Screen('Flip', handles.A.window);

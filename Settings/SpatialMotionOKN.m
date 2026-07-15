@@ -1,4 +1,4 @@
-function [S,P] = Speed_Motion_OKN()
+function [S,P] = SpatialMotionOKN()
 
 %%%% NECESSARY VARIABLES FOR GUI
 %%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -16,7 +16,7 @@ S.MarmoViewVersion = '7';  % Upgrade from 5
 S.finish = 200;
 
 % PROTOCOL PREFIX
-S.protocol = 'Speed_Motion_OKN';
+S.protocol = 'SpatialMotionOKN';
 % PROTOCOL PREFIXS
 S.protocol_class = ['protocols.PR_',S.protocol];
 
@@ -58,9 +58,11 @@ P.iti = 0.5;
 S.iti = 'Duration of intertrial interval (s):';
 P.bkgd = 0.5;
 S.bkgd = 'Choose a grating background color (0-1):';
+P.noiserange = 0.2;
+S.noiserange = 'Luminance range of grating (0-0.5):';
 
 % Gaze indicator
-P.eyeRadius = 1.5; % 1.5;
+P.eyeRadius = 1; 
 S.eyeRadius = 'Gaze indicator radius (degrees):';
 P.eyeIntensity = 0.05;
 S.eyeIntensity = 'Indicator intensity:';
@@ -74,7 +76,7 @@ S.noiseheight = 'Spatial noise height (degs, +/- origin):';
 
 %***************
 % number of frames for one cycle (120hz, if 120 => 1hz)
-P.gratingcycle = 120; 
+P.gratingcycle = S.frameRate; 
 S.gratingcycle = 'Set the temporal freq of grating drift';
 P.spf = 0.2;  % spatial frequency
 S.spf = 'Spat freq (cyc/deg):';
@@ -90,10 +92,16 @@ S.speednum = 'Number of speeds, log 2 scale from base speed';
 %********* parameters for noise stimulus following gaze
 P.noiseradius = 50; %4.0;  % diameter of target is dva
 S.noiseradius = 'Size of Face(dva):';
-P.noiserange = 48/255;
-S.noiserange = 'Luminance range of grating (0-0.5):';
 P.squareWave = 1;
-S.squareWave = 'Use square wave in grating'; 
+S.squareWave = 'Use square wave in grating';
 P.dutyCycle = 0.5;
 S.dutyCycle = 'Light:dark ratio (0-1):';
+
+%********* stimulus type: drifting grating vs moving 2D binary noise
+P.stimType = 0;
+S.stimType = 'Stimulus: 0=grating, 1=2D noise:';
+P.noiseSquareSize = 0.2;
+S.noiseSquareSize = 'Size of binary noise squares (dva):';
+P.noiseSeed = 0;
+S.noiseSeed = 'Seed for noise generator (0=pick random):';
 

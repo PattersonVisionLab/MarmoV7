@@ -90,7 +90,7 @@ classdef grating < handle
             end
         end
 
-        function beforeTrial(obj) %#ok<MANU>
+        function beforeTrial(obj)
         end
 
         function beforeFrame(obj)
@@ -150,9 +150,19 @@ classdef grating < handle
                     s1( s1 > 0 ) = 1;
                     s1( s1 < 0 ) = -1;
                 else
+                    % Keep the less-common bar at full range, and scale the
+                    % more-common bar's amplitude so the duty-cycle-weighted
+                    % mean stays at bkgd (constant mean background level).
                     dutyCycleThreshold = cos(pi * obj.dutyCycle);
-                    s1( s1 > dutyCycleThreshold ) = 1;
-                    s1( s1 <= dutyCycleThreshold ) = -1;
+                    if obj.dutyCycle < 0.5
+                        onLevel = 1;
+                        offLevel = obj.dutyCycle / (1 - obj.dutyCycle);
+                    else
+                        onLevel = (1 - obj.dutyCycle) / obj.dutyCycle;
+                        offLevel = 1;
+                    end
+                    s1( s1 > dutyCycleThreshold ) = onLevel;
+                    s1( s1 <= dutyCycleThreshold ) = -offLevel;
                 end
             end
             if ~isinf(obj.radius)

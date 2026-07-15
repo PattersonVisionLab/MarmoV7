@@ -63,13 +63,8 @@ classdef PR_FixFlash < handle
             sz = P.fixPointRadius*S.pixPerDeg;
             obj.hFix.cSize = sz;
             obj.hFix.sSize = 2*sz;
-            if S.use8Bit
-                obj.hFix.cColour = ones(1,3); % black
-                obj.hFix.sColour = repmat(255,1,3); % white
-            else
-                obj.hFix.cColour = [0 0 0];
-                obj.hFix.sColour = [1 1 1];
-            end
+            obj.hFix.cColour = [0 0 0];
+            obj.hFix.sColour = [1 1 1];
             obj.hFix.position = [0,0]*S.pixPerDeg + S.centerPix;
             obj.hFix.updateTextures();
             %**********************************

@@ -83,14 +83,9 @@ P.radius = 2.0;
 S.radius = 'Grating radius (degrees):';
 P.orientation = 0;
 S.orientation = 'Orientation of grating (degrees):';
-if S.use8Bit
-    P.bkgd = 127;
-    P.range = 127;
-else
-    P.bkgd = 0.5;
-    P.range = 0.5;
-end
+P.bkgd = 0.5;
 S.bkgd = 'Choose a grating background color (0-1/0-255):';
+P.range = 0.5;
 S.range = 'Luminance range of grating (0-0.5/1-127):';
 P.phase = -1;
 S.phase = 'Grating phase (-1 or 1):';
@@ -110,17 +105,12 @@ P.fixPointRadius = 0.25;
 S.fixPointRadius = 'Fix Point Radius (degs):';
 P.fixPointColorOut = 0;
 S.fixPointColorOut = 'Color of point outline (0-1/0-255):';
-P.fixPointColorIn = 255;
+P.fixPointColorIn = 1;
 S.fixPointColorIn = 'Color of point center (0-1/0-255):';
 P.xFixDeg = 0.0; 
 S.xFixDeg = 'Fix X center (degs):';
 P.yFixDeg = 0.0;
 S.yFixDeg = 'Fix Y center (degs):';
-
-if ~S.use8Bit
-    P.fixPointColorIn = P.fixPointColorIn/255;
-    P.fixPointColorOut = P.fixPointColorOut/255;
-end
 
 % Fixation and Response Windows
 P.initWinRadius = 1.5; % 2.5; % was 1.0
@@ -136,7 +126,7 @@ P.choiceY = 0;
 S.choiceY = 'Sample choice location, Y (deg): ';
 P.choiceWidth = 3;
 S.choiceWidth = 'Width of line aperture :';
-P.choiceCon = 20;
+P.choiceCon = 20/255;
 S.choiceCon = 'Contrast of line aperture :';
 %*************
 P.stimWinMinRad = 2.5; 

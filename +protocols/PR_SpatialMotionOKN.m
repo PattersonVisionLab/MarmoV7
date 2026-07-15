@@ -1,8 +1,5 @@
-classdef PR_Speed_Motion_OKN < handle
-% Matlab class for running an experimental protocl
-%
-% The class constructor can be called with a range of arguments:
-%
+classdef PR_SpatialMotionOKN < handle
+% Branch of SpeedMotionOKN with duty cycle, 0-1 intensities, noise
 
     properties (Access = public)
         Iti          double = 1;         % default Iti duration
@@ -26,10 +23,6 @@ classdef PR_Speed_Motion_OKN < handle
         D = struct();        % store PR data (see end_plots)
     end
 
-    properties (Hidden, Constant)
-        MAX_TRIAL_DURATION = 20  % seconds
-    end
-
     properties (SetAccess = private)
         %********* stimulus structs for use
         % which noise stim (if long term duration)
@@ -39,7 +32,9 @@ classdef PR_Speed_Motion_OKN < handle
         spatialFreq = 0.2;
         temporalFrequency = 1;      %
         % speed change phase step
-        speedStep = 1;         
+        speedStep = 1;
+        % seed used to generate the 2D binary noise pattern (P.stimType==1)
+        seed = 0;
         %******* parameters for Noise History grating stimulus
         NoiseHistory = []; % list of noise frames over trial and their times
         FrameCount = 0;    % count noise frames
@@ -50,7 +45,7 @@ classdef PR_Speed_Motion_OKN < handle
     end
 
     methods (Access = public)
-        function obj = PR_Speed_Motion_OKN(winPtr)
+        function obj = PR_SpatialMotionOKN(winPtr)
             obj.winPtr = winPtr;
             obj.trialsList = [];  % should be set by generate call
         end
@@ -77,31 +72,87 @@ classdef PR_Speed_Motion_OKN < handle
             obj.StimPhase = 1;
             %*********
             fprintf('Creating stimuli... ');
-            for i = 1:P.gratingcycle
-                fprintf('%u  ', i);
-                %******** replace dot field with full-field grating
-                obj.hGrating{1,i} = stimuli.grating(obj.winPtr); 
-                obj.hGrating{1,i}.position = S.centerPix;
-                if isinf(P.noiseradius)
-                    obj.hGrating{1,i}.radius = Inf; %fill entire screen
-                    obj.hGrating{1,i}.screenRect = S.screenRect;
+            if P.stimType == 1  % binary noise
+                
+                if P.noiseSeed == 0
+                    obj.seed = RandStream.shuffleSeed;
                 else
-                    obj.hGrating{1,i}.radius = round(P.noiseradius * S.pixPerDeg);
+                    obj.seed = P.noiseSeed;
                 end
-                %*********
-                obj.hGrating{1,i}.orientation = obj.ori - 90;  % 0 is right
-                obj.hGrating{1,i}.phase = (360*((i-1) / P.gratingcycle));
-                obj.hGrating{1,i}.cpd = obj.spatialFreq;
-                %*******
-                obj.hGrating{1,i}.range = P.noiserange;
-                obj.hGrating{1,i}.square = logical(P.squareWave);
-                obj.hGrating{1,i}.dutyCycle = P.dutyCycle;
-                obj.hGrating{1,i}.squareAperture = false;
-                obj.hGrating{1,i}.gauss = true;
-                obj.hGrating{1,i}.bkgd = P.bkgd;
-                obj.hGrating{1,i}.transparent = 0.5;
-                obj.hGrating{1,i}.pixperdeg = S.pixPerDeg;
-                obj.hGrating{1,i}.updateTextures();
+                %******** Build the shared base noise pattern ONCE here
+                % (not per-frame) - all P.gratingcycle frames are just
+                % pixel-shifted crops of this same tiled pattern
+                if isinf(P.noiseradius)
+                    heightPix = S.screenRect(4);
+                    widthPix  = S.screenRect(3);
+                else
+                    dPix = 2 * round(P.noiseradius * S.pixPerDeg) + 1;
+                    heightPix = dPix;
+                    widthPix  = dPix;
+                end
+                pixPerSquare = max(1, round(P.noiseSquareSize * S.pixPerDeg));
+                squaresH = ceil(heightPix / pixPerSquare);
+                % size the tile to cover the full display width so a single
+                % frame never shows a repeated block of the pattern
+                squaresW = ceil(widthPix / pixPerSquare);
+                rng(obj.seed);
+                raw = rand(squaresH, squaresW);
+                binaryMat = 2 * double(raw > 0.5) - 1;  % values in {-1, +1}
+                basePattern = kron(binaryMat, ones(pixPerSquare));
+                tileWidthPix = size(basePattern, 2);
+                %***********
+                for i = 1:P.gratingcycle
+                    fprintf('%u  ', i);
+                    obj.hGrating{1,i} = stimuli.noise2d(obj.winPtr, S.pixPerDeg);
+                    obj.hGrating{1,i}.position = S.centerPix;
+                    if isinf(P.noiseradius)
+                        obj.hGrating{1,i}.radius = Inf; %fill entire screen
+                        obj.hGrating{1,i}.screenRect = S.screenRect;
+                    else
+                        obj.hGrating{1,i}.radius = round(P.noiseradius * S.pixPerDeg);
+                    end
+                    %*******
+                    obj.hGrating{1,i}.basePattern = basePattern;
+                    % spread the P.gratingcycle phase steps evenly across
+                    % the full tile width so one StimPhase cycle pans the
+                    % entire unique pattern rather than a small sliver
+                    obj.hGrating{1,i}.shiftPix = round((i-1) * tileWidthPix / P.gratingcycle);
+                    %*******
+                    obj.hGrating{1,i}.range = P.noiserange;
+                    obj.hGrating{1,i}.squareAperture = true;
+                    obj.hGrating{1,i}.gauss = true;
+                    obj.hGrating{1,i}.bkgd = P.bkgd;
+                    obj.hGrating{1,i}.transparent = 0.5;
+                    obj.hGrating{1,i}.pixperdeg = S.pixPerDeg;
+                    obj.hGrating{1,i}.updateTextures();
+                end
+            else
+                for i = 1:P.gratingcycle
+                    fprintf('%u  ', i);
+                    %******** replace dot field with full-field grating
+                    obj.hGrating{1,i} = stimuli.grating(obj.winPtr);
+                    obj.hGrating{1,i}.position = S.centerPix;
+                    if isinf(P.noiseradius)
+                        obj.hGrating{1,i}.radius = Inf; %fill entire screen
+                        obj.hGrating{1,i}.screenRect = S.screenRect;
+                    else
+                        obj.hGrating{1,i}.radius = round(P.noiseradius * S.pixPerDeg);
+                    end
+                    %*********
+                    obj.hGrating{1,i}.orientation = obj.ori - 90;  % 0 is right
+                    obj.hGrating{1,i}.phase = (360*((i-1) / P.gratingcycle));
+                    obj.hGrating{1,i}.cpd = obj.spatialFreq;
+                    %*******
+                    obj.hGrating{1,i}.range = P.noiserange;
+                    obj.hGrating{1,i}.square = logical(P.squareWave);
+                    obj.hGrating{1,i}.dutyCycle = P.dutyCycle;
+                    obj.hGrating{1,i}.squareAperture = false;
+                    obj.hGrating{1,i}.gauss = true;
+                    obj.hGrating{1,i}.bkgd = P.bkgd;
+                    obj.hGrating{1,i}.transparent = 0.5;
+                    obj.hGrating{1,i}.pixperdeg = S.pixPerDeg;
+                    obj.hGrating{1,i}.updateTextures();
+                end
             end
             fprintf('Done\n');
             %****************
@@ -257,6 +308,15 @@ classdef PR_Speed_Motion_OKN < handle
             r = obj.P.noiseheight;
             plot(h,r*cos(0:.01:1*2*pi), r*sin(0:.01:1*2*pi), '-k');
             set(h, 'NextPlot', 'Add');
+            %********
+            % h = handles.EyeTrace;
+            % set(h,'NextPlot','Replace');
+            %****** plot eccentric ring where stimuli appear
+            % h = handles.EyeTrace;
+            % set(h,'NextPlot','Replace');
+            % eyeRad = handles.eyeTraceRadius;
+            %*****************
+            % axis(h,[-eyeRad eyeRad -eyeRad eyeRad]);
         end
 
         function PR = end_plots(obj, P, A)
@@ -276,6 +336,10 @@ classdef PR_Speed_Motion_OKN < handle
             PR.tempfreq = obj.temporalFrequency;
             PR.noiseStim = obj.noiseStim; %differs based on noise type
             PR.speedStep = obj.speedStep;
+            PR.stimType = obj.P.stimType;
+            if (obj.P.stimType == 1)
+                PR.noiseSeed = obj.seed;
+            end
 
             %%%% Record some data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % It is advised not to store things too large here, like eye

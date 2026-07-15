@@ -1,4 +1,4 @@
-# MarmoV6 (V7?)
+# MarmoV7
 
 Running notes on parsing how MarmoV6 works.
 
