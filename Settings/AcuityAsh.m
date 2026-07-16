@@ -75,15 +75,18 @@ P.FreqNum = 9;
 S.FreqNum = 'Numb of freqs:';
 P.apertures = 4;
 S.apertures = 'Number of choice apertures:';
-P.xDeg = 0.0; 
+P.xDeg = 0.0;
 S.xDeg = 'X center of stimulus (degrees):';
 P.yDeg = 0.0;
 S.yDeg = 'Y center of stimulus (degrees):';
-P.radius = 2.0;   
+P.radius = 2.0;
 S.radius = 'Grating radius (degrees):';
 P.orientation = 0;
 S.orientation = 'Orientation of grating (degrees):';
-P.bkgd = 0.5;
+P.bkgd = 127;
+if ~S.use8Bit
+    P.bkgd = P.bkgd/255;
+end
 S.bkgd = 'Choose a grating background color (0-1/0-255):';
 P.range = 0.5;
 S.range = 'Luminance range of grating (0-0.5/1-127):';
@@ -93,21 +96,28 @@ P.squareWave = 0;
 S.squareWave = '0 - sine wave, 1 - square wave';
 
 % Gaze indicator
-P.eyeRadius = 2.5; 
+P.eyeRadius = 2.5;
 S.eyeRadius = 'Gaze indicator radius (degrees):';
 P.eyeIntensity = 5;
+if ~S.use8Bit
+    P.eyeIntensity = P.eyeIntensity/255;
+end
 S.eyeIntensity = 'Indicator intensity:';
 P.showEye = 0;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
 
 %****** fixation properties
-P.fixPointRadius = 0.25; 
+P.fixPointRadius = 0.25;
 S.fixPointRadius = 'Fix Point Radius (degs):';
 P.fixPointColorOut = 0;
 S.fixPointColorOut = 'Color of point outline (0-1/0-255):';
-P.fixPointColorIn = 1;
+P.fixPointColorIn = 255;
+if ~S.use8Bit
+    P.fixPointColorIn = P.fixPointColorIn/255;
+    P.fixPointColorOut = P.fixPointColorOut/255;
+end
 S.fixPointColorIn = 'Color of point center (0-1/0-255):';
-P.xFixDeg = 0.0; 
+P.xFixDeg = 0.0;
 S.xFixDeg = 'Fix X center (degs):';
 P.yFixDeg = 0.0;
 S.yFixDeg = 'Fix Y center (degs):';
@@ -120,16 +130,19 @@ S.fixWinRadius = 'Fixation window radius (deg):';
 %*** check for saccade into left or right space
 P.choiceRad = 4.0; % ring stimulus
 S.choiceRad = 'Choice placed out to left or right (deg):';
-P.choiceX = 5.0;   
+P.choiceX = 5.0;
 S.choiceX = 'Sample choice location, X (deg): ';
 P.choiceY = 0;
 S.choiceY = 'Sample choice location, Y (deg): ';
 P.choiceWidth = 3;
 S.choiceWidth = 'Width of line aperture :';
-P.choiceCon = 20/255;
+P.choiceCon = 20;
+if ~S.use8Bit
+    P.choiceCon = P.choiceCon/255;
+end
 S.choiceCon = 'Contrast of line aperture :';
 %*************
-P.stimWinMinRad = 2.5; 
+P.stimWinMinRad = 2.5;
 S.stimWinMinRad = 'Minumum saccade from fixation (deg):';
 P.stimWinMaxRad = 12;
 S.stimWinMaxRad = 'Maximum saccade from fixation (deg):';
@@ -143,9 +156,9 @@ P.flashFrameLength = 30; %flash fixatin to draw animal to center
 S.flashFrameLength = 'Length of fixation flash (frames):';
 P.fixGrace = 0.05;
 S.fixGrace = 'Grace period to be inside fix window (s):';
-P.fixMin = 0.1;  
+P.fixMin = 0.1;
 S.fixMin = 'Minimum fixation (s):';
-P.fixRan = 0.1; 
+P.fixRan = 0.1;
 S.fixRan = 'Random additional fixation (s):';
 P.stimDur = 0.30;
 S.stimDur = 'Duration of grating presentation (s):';

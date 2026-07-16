@@ -1,4 +1,4 @@
-function [S,P] = BackImage
+function [S, P] = BackImage()
 
 %%%%% NECESSARY VARIABLES FOR GUI %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LOAD THE RIG SETTINGS, THESE HOLD CRUCIAL VARIABLES SPECIFIC TO THE RIG,
@@ -19,7 +19,7 @@ S.protocol_class = ['protocols.PR_',S.protocol];
 S.ImageDirectory = 'Backgrounds';  % default is Backgrounds directory
                                    % but you can easily choose another
                                    % and place it under SupportData
-                                   
+
 % Define Banner text to identify the experimental protocol
 S.protocolTitle = 'Foraging full screen images';
 
@@ -32,7 +32,7 @@ S.InTrialCalib = 'Eye Calib in Trials';
 % This settings is unnecessary because 'MarmoViewLastCalib.mat' is the GUI
 % default to use, but because this is an exemplar protocol I decided to
 % includee it if for some reason you don't want to use the last calibration
-% values (e.g. subjects you are running have substantially different 
+% values (e.g. subjects you are running have substantially different
 % horizontal or vertical gain). Place this calibration file in the
 % 'SupportData' directory of MarmoView
 S.calibFilename = 'MarmoViewLastCalib.mat';
@@ -50,11 +50,17 @@ S.calibFilename = 'MarmoViewLastCalib.mat';
 % Stimulus settings
 P.eyeRadius = 2.0;
 S.eyeRadius = 'Gaze indicator radius (degrees):';
-P.eyeIntensity = 0.12;
-S.eyeIntensity = 'Indicator intensity:';
+P.eyeIntensity = 20;
+if ~S.use8Bit
+    P.eyeIntensity = P.eyeIntensity/255;
+end
+S.eyeIntensity = 'Indicator intensity (0-1):';
 P.showEye = 0;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
-P.bkgd = 0.5;
+P.bkgd = 127;
+if ~S.use8Bit
+    P.bkgd = P.bkgd/255;
+end
 S.bkgd = 'Choose the background color (0-1):';
 
 % Trial timing
@@ -62,4 +68,3 @@ P.imageDur = 10;
 S.imageDur = 'Duration to display image (s):';
 P.iti = 2;
 S.iti = 'Duration of intertrial interval (s):';
-    

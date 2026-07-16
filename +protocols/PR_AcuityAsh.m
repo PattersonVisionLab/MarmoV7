@@ -1,5 +1,5 @@
 classdef PR_AcuityAsh < handle
-% 
+%
 % Stimuli:
 %   Faces       stimuli.gaussimages
 %   hFix        stimuli.fixation
@@ -7,11 +7,11 @@ classdef PR_AcuityAsh < handle
 %   hChoice     stimuli.circles
 % TODO: closeUp doesn't close faces?
 %
-% States: 
+% States:
 %   7 Move to iti -- inter-trial interval
 
-    
-    properties 
+
+    properties
         Iti   = 1;              % default Iti duration
         startTime   = 0;        % trial start time
         fixStart   = 0;         % fix acquired time
@@ -29,7 +29,7 @@ classdef PR_AcuityAsh < handle
         faceTrial   = false;    % trial with face to start
         faceFlash   = false;    % show face or fixation at random
     end
-    
+
     properties (Access = private)
         winPtr; % ptb window
         state   = 0;      % state counter
@@ -50,17 +50,17 @@ classdef PR_AcuityAsh < handle
         %****************
         D = struct();        % store PR data for end plot stats
     end
-    
-    methods 
+
+    methods
         function obj = PR_AcuityAsh(winPtr)
             obj.winPtr = winPtr;
             obj.trialsList = [];
         end
-        
+
         function state = get_state(obj)
             state = obj.state;
         end
-        
+
         function initFunc(obj, S, P)
             %********** Set-up for trial indexing (required)
             cors = [0,4];  % count these errors as correct trials
@@ -68,20 +68,20 @@ classdef PR_AcuityAsh < handle
 
             obj.trialIndexer = marmoview.TrialIndexer(obj.trialsList, P, cors, reps);
             obj.error = 0;
-            
-            obj.Faces = stimuli.gaussimages(obj.winPtr,... 
+
+            obj.Faces = stimuli.gaussimages(obj.winPtr,...
                 'bkgd', S.bgColour,'gray',false);   % color images
             obj.Faces.loadimages(fullfile(getMarmoViewPath(),...
                 'SupportData', 'MarmosetFaceLibrary.mat'));  % uint8
             obj.Faces.position = [0,0] * S.pixPerDeg + S.centerPix;
             obj.Faces.radius = round(P.faceRadius * S.pixPerDeg);
-            
+
             %********** Initialize Graphics Objects
             obj.hFix = stimuli.fixation(obj.winPtr);   % fixation stimulus
             obj.hProbe = stimuli.grating(obj.winPtr);  % grating probe
             for k = 1:P.apertures
                 % choice grating, right (vertical)
-                obj.hChoice{k} = stimuli.circles(obj.winPtr); 
+                obj.hChoice{k} = stimuli.circles(obj.winPtr);
                 ango = (((k-1)/P.apertures)*2*pi) + (pi/4);
                 xpos = P.ecc * cos(ango);
                 ypos = P.ecc * sin(ango);
@@ -92,16 +92,21 @@ classdef PR_AcuityAsh < handle
                 obj.hChoice{k}.weight = P.choiceWidth; %width in pixels
             end
             %********* if stimuli remain constant on all trials, set-them up here
-            
+
             % set fixation point properties
             sz = P.fixPointRadius*S.pixPerDeg;
             obj.hFix.cSize = sz;
             obj.hFix.sSize = 2*sz;
-            obj.hFix.cColour = [0 0 0];
-            obj.hFix.sColour = [1 1 1];
+            if S.use8Bit
+                obj.hFix.cColour = ones(1,3);
+                obj.hFix.sColour = repmat(255, 1, 3);
+            else
+                obj.hFix.cColour = [0 0 0];
+                obj.hFix.sColour = [1 1 1];
+            end
             obj.hFix.position = [0,0]*S.pixPerDeg + S.centerPix;
             obj.hFix.updateTextures();
-            
+
             %********** load in a fixation error sound ************
             [y,fs] = audioread(['SupportData',filesep,'gunshot_sound.wav']);
             y = y(1:floor(size(y,1)/3),:);  % shorten it, very long sound
@@ -109,7 +114,7 @@ classdef PR_AcuityAsh < handle
             obj.fixbreak_sound_fs = fs;
             %*********************
         end
-        
+
         function closeFunc(o)
             o.hFix.CloseUp();
             o.hProbe.CloseUp();
@@ -117,12 +122,12 @@ classdef PR_AcuityAsh < handle
                 o.hChoice{k}.CloseUp;
             end
         end
-        
+
         function generate_trialsList(obj, S, P)
             % Spatial frequency sampling
             lx = log(P.minFreq):((log(P.maxFreq)-log(P.minFreq))/P.FreqNum):log(P.maxFreq);
             sf_sampling =  exp(lx); % [2 4 6 8 10 12];
-            
+
             % Generate trials list
             obj.trialsList = [];
             for zk = 1:size(sf_sampling, 2)
@@ -138,7 +143,7 @@ classdef PR_AcuityAsh < handle
                         mjuice = P.rewardNumber;
                     end
                     %*************
-                    % storing list of trials, 
+                    % storing list of trials,
                     % [Choice_xpos Choice_ypos  SpatFreq Phase Ori Juice_Amount]
                     obj.trialsList = [obj.trialsList ; ...
                         [xpos ypos sf_sampling(zk) 0  stimori mjuice]];
@@ -146,13 +151,13 @@ classdef PR_AcuityAsh < handle
                 end
             end
         end
-        
+
         function P = next_trial(o,S,P)
             %********************
             o.S = S;
             o.P = P;
             %*******************
-            
+
             if P.runType == 1   % go through trials list
                 i = o.trialIndexer.getNextTrial(o.error);
                 %****** update trial parameters for next trial
@@ -168,10 +173,10 @@ classdef PR_AcuityAsh < handle
                 o.P = P;  % set to most current
                 disp(P)
             end
-            
+
             % Calculate this for pie slice windowing for choice
             o.stimTheta = atan2(P.choiceY,P.choiceX);
-            
+
             % Make Gabor stimulus texture
             o.hProbe(1).position = [(S.centerPix(1) + round(P.xDeg*S.pixPerDeg)),...
                                     (S.centerPix(2) - round(P.yDeg*S.pixPerDeg))];
@@ -184,7 +189,7 @@ classdef PR_AcuityAsh < handle
             o.hProbe(1).bkgd = P.bkgd;
             o.hProbe(1).updateTextures();
             %******************************************
-            
+
             % Select a face from image set to show at center
             o.Faces.imagenum = randi(length(o.Faces.tex));  % pick any at random
             if o.faceTrial
@@ -198,7 +203,7 @@ classdef PR_AcuityAsh < handle
             end
             %*************
         end
-        
+
         function [FP,TS] = prep_run_trial(obj)
             cprintf('_[1,0.7,0.5]', '\tProtocol, call prepRunTrial\n');
             %********VARIABLES USED IN RUNNING TRIAL LOGISTICS
@@ -242,7 +247,7 @@ classdef PR_AcuityAsh < handle
             %********
             obj.startTime = GetSecs;
         end
-        
+
         function keepgoing = continue_run_trial(obj, screenTime)
 %            cprintf('_[1,0.7,0.5]', '\tProtocol, call continueRunTrial\n');
             keepgoing = 0;
@@ -250,17 +255,17 @@ classdef PR_AcuityAsh < handle
                 keepgoing = 1;
             end
         end
-        
+
         %******************** THIS IS THE BIG FUNCTION *************
         function drop = state_and_screen_update(obj, currentTime, x, y)
             drop = 0;
             %******* THIS PART CHANGES WITH EACH PROTOCOL ****************
-            
+
             % POLAR COORDINATES FOR PIE SLICE METHOD, note three values of polT to
             % ensure atan2 discontinuity does not wreck shit
             polT = atan2(y,x)+[-2*pi 0 2*pi];
             polR = norm([x y]);
-            
+
             %%%%% STATE 0 -- GET INTO FIXATION WINDOW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % If eye travels within the fixation window, move to state 1
             if obj.state == 0 && norm([x y]) < obj.P.initWinRadius
@@ -268,7 +273,7 @@ classdef PR_AcuityAsh < handle
                 obj.fixStart = GetSecs;
                 cprintf('_[0.5,0.5,0.5]', '\tProtocol, state 1 (fixation)\n');
             end
-            
+
             % Trial expires if not started within the start duration
             if obj.state == 0 && currentTime > obj.startTime + obj.P.startDur
                 obj.state = 8; % Move to iti -- inter-trial interval
@@ -276,7 +281,7 @@ classdef PR_AcuityAsh < handle
                 obj.itiStart = GetSecs;
                 cprintf('_[0.5,0.5,0.5]', '\tProtocol, state 8 (expired)\n');
             end
-            
+
             %%%%% STATE 1 -- GRACE PERIOD TO BE IN FIXATION WINDOW %%%%%%%%%%%%%%%%
             % A grace period is given before the eye must remain in fixation
             if obj.state == 1 && currentTime > obj.fixStart + obj.P.fixGrace
@@ -288,13 +293,13 @@ classdef PR_AcuityAsh < handle
                     obj.itiStart = GetSecs;
                 end
             end
-            
+
             %%%%% STATE 2 -- HOLD FIXATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % If fixation is held for the fixation duration, move to state 3
             if obj.state == 2 && currentTime > obj.fixStart + obj.fixDur
                 obj.state = 3; % Move to show stimulus
                 obj.stimStart = GetSecs();
-                
+
                 cprintf('_[0.5,0.5,0.5]', '\tProtocol, state 3 (fixation held)\n');
             end
             % Eye must remain in the fixation window
@@ -302,17 +307,17 @@ classdef PR_AcuityAsh < handle
                 obj.state = 8; % Move to iti -- inter-trial interval
                 obj.error = 2; % Error 2 is failure to hold fixation
                 obj.itiStart = GetSecs();
-                
+
                 cprintf('_[0.5,0.5,0.5]', '\tProtocol, state 8 (fixation lost)\n');
             end
-            
+
             %%%%% STATE 4 -- SHOW STIMULUS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Eye leaving fixation indicates a saccade, move to state 4
             if (obj.state == 4) && norm([x y]) > obj.P.fixWinRadius
                 obj.state = 5; % dim fixation if so, then move to saccade in flight
                 obj.responseStart = GetSecs();
             end
-            
+
             %**** in this scenario, eye always leaves, only question if
             %**** it goes to the right location
             % Hold fixation through the stimulus presentation
@@ -331,17 +336,17 @@ classdef PR_AcuityAsh < handle
                     %***********************
                 end
             end
-            
+
             % Eye must leave fixation within stimulus duration or counted as no
             % response after some much longer interval
             if obj.state == 4 && currentTime > obj.stimStart + obj.P.noresponseDur
                 obj.state = 7; % Move to iti -- inter-trial interval
                 obj.error = 3; % Error 3 is failure to make a saccade
                 obj.itiStart = GetSecs();
-                
+
                 cprintf('_[0.5,0.5,0.5]', '\tProtocol, state 7 (no saccade)\n');
             end
-            
+
             %%%%% STATE 5 -- IN FLIGHT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Give the saccade time to finish flight
             if obj.state == 5 && currentTime > obj.responseStart + obj.P.flightDur
@@ -356,13 +361,13 @@ classdef PR_AcuityAsh < handle
                     obj.itiStart = GetSecs();
                 end
             end
-            
+
             %%%%% STATE 6 -- HOLD STIMULUS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % If the eye does not leave the stimulus, then reward
             if obj.state == 6 && currentTime > obj.responseEnd + obj.P.holdDur
                 obj.state = 7; % Move to iti -- trial is over
                 obj.itiStart = GetSecs();
-                
+
                 cprintf('_[0.5,0.5,0.5]', '\tProtocol, state 7 (reward)\n');
             end
             % If the eye leaves before hold duration, no reward
@@ -371,7 +376,7 @@ classdef PR_AcuityAsh < handle
                 obj.error = 5; % Error 5 is failure to hold the stimulus
                 obj.itiStart = GetSecs();
             end
-            
+
             %%%%% STATE 7 -- INTER-TRIAL INTERVAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Deliver rewards
             if obj.state == 7
@@ -379,7 +384,7 @@ classdef PR_AcuityAsh < handle
                     if currentTime > obj.itiStart + 0.2*obj.rewardCount % deliver in 200 ms increments
                         obj.rewardCount = obj.rewardCount + 1;
                         drop = 1;
-                        
+
                         cprintf('_[0.5,0.5,0.5]', '\tProtocol, reward delivered\n');
                     end
                 else
@@ -395,7 +400,7 @@ classdef PR_AcuityAsh < handle
                     end
                 end
             end
-            
+
             % STATE SPECIFIC DRAWS
             switch obj.state
                 case 0
@@ -418,15 +423,15 @@ classdef PR_AcuityAsh < handle
                             end
                         end
                     end
-                    
+
                 case 1
                     % Bright fixation spot, prior to stimulus onset
                     obj.hFix.beforeFrame(1);
-                    
+
                 case 2
                     % Continue to show fixation for a hold period
                     obj.hFix.beforeFrame(1);
-                    
+
                 case 3
                     if ~obj.faceTrial
                         % fixation remains on while Gabor stim is shown
@@ -438,7 +443,7 @@ classdef PR_AcuityAsh < handle
                         obj.hFix.beforeFrame(1);
                     end
                 case 4    % disappear fixation and show apertures to go
-                    
+
                     %********* show stimulus if still appropriate
                     if ~obj.faceTrial
                         if ( currentTime < obj.stimStart + obj.P.stimDur )
@@ -450,9 +455,9 @@ classdef PR_AcuityAsh < handle
                             end
                         end
                     end
-                    
+
                 case 5    % saccade in flight, dim fixation, just in case not done before
-                    
+
                     %********* show stimulus if still appropriate
                     if ~obj.faceTrial
                         if ( currentTime < obj.stimStart + obj.P.stimDur )
@@ -464,10 +469,10 @@ classdef PR_AcuityAsh < handle
                             end
                         end
                     end
-                    
-                case {6 7} 
+
+                case {6 7}
                     % once saccade landed, reappear stimulus,  show correct option
-                    
+
                     if obj.faceTrial
                         if (obj.error == 0)
                             obj.Faces.beforeFrame();
@@ -489,7 +494,7 @@ classdef PR_AcuityAsh < handle
                             end
                         end
                     end
-                    
+
                 case 8
                     if (obj.error == 2) % broke fixation
                         obj.hFix.beforeFrame(2);
@@ -498,20 +503,20 @@ classdef PR_AcuityAsh < handle
                     end
                     % leave everything blank for a minimum ITI
             end
-            
+
             %******** if sound, do here
             if (obj.RunFixBreakSound == 1) && (obj.NeverBreakSoundTwice == 0)
                 sound(obj.fixbreak_sound,obj.fixbreak_sound_fs);
                 obj.NeverBreakSoundTwice = 1;
             end
         end
-        
+
         function Iti = end_run_trial(o)
             cprintf('_[1,0.7,0.5]', '\tProtocol, call endRunTrial\n');
-            
+
             Iti = o.Iti - (GetSecs() - o.itiStart); % returns generic Iti interval
         end
-        
+
         function plot_trace(o,handles)
             % This function plots the eye trace from a trial in the EyeTracker
             % window of MarmoView.
@@ -522,7 +527,7 @@ classdef PR_AcuityAsh < handle
             r = o.P.fixWinRadius;
             plot(h,r*cos(0:.01:1*2*pi),r*sin(0:.01:1*2*pi),'--k');
             set(h,'NextPlot','Add');
-            
+
             % Stimulus window
             stimX = o.P.choiceX;
             stimY = o.P.choiceY;
@@ -531,7 +536,7 @@ classdef PR_AcuityAsh < handle
             maxR = o.P.stimWinMaxRad;
             errT = o.P.stimWinTheta;
             stimT = atan2(stimY,stimX);
-            
+
             plot(h,[minR*cos(stimT+errT) maxR*cos(stimT+errT)],[minR*sin(stimT+errT) maxR*sin(stimT+errT)],'--k');
             plot(h,[minR*cos(stimT-errT) maxR*cos(stimT-errT)],[minR*sin(stimT-errT) maxR*sin(stimT-errT)],'--k');
             plot(h,minR*cos(stimT-errT:pi/100:stimT+errT),minR*sin(stimT-errT:pi/100:stimT+errT),'--k');
@@ -541,10 +546,10 @@ classdef PR_AcuityAsh < handle
             axis(h,[-eyeRad eyeRad -eyeRad eyeRad]);
             fprintf('---\nplot_trace took %.4f secs\n---\n', toc);
         end
-        
-        function PR = end_plots(obj, P, A)   
+
+        function PR = end_plots(obj, P, A)
             %update D struct if passing back info
-            
+
             %************* STORE DATA to PR
             PR = struct();
             PR.error = obj.error;
@@ -556,7 +561,7 @@ classdef PR_AcuityAsh < handle
             PR.cpd = P.cpd;
             PR.faceTrial = obj.faceTrial;
             %******* this is also where you could store Gabor Flash Info
-            
+
             %%%% Record some data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             obj.D.error(A.j) = obj.error;
             obj.D.xDeg(A.j) = P.xDeg;
@@ -564,7 +569,7 @@ classdef PR_AcuityAsh < handle
             obj.D.x(A.j) = P.choiceX;
             obj.D.y(A.j) = P.choiceY;
             obj.D.cpd(A.j) = P.cpd;
-            
+
             %%%% Plot results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Dataplot 1, errors
             errors = [0 1 2 3 4 5;
@@ -573,7 +578,7 @@ classdef PR_AcuityAsh < handle
             title(A.DataPlot1,'Errors');
             ylabel(A.DataPlot1,'Count');
             set(A.DataPlot1,'XLim',[-.75 5.75]);
-            
+
             % DataPlot2, fraction correct by spatial location (left or right trial)
             % Note that this plot will break down if multiple stimulus eccentricities
             % or a non horizontal hexagon are used. It will also only calculate
@@ -590,11 +595,11 @@ classdef PR_AcuityAsh < handle
                     fcXxy(i) = Ncorrect/Ntotal;
                 end
                 % Constructs labels based on the six locations
-                if x > 0 && abs(y) < .01     
-                    labels{i} = 'R';    
+                if x > 0 && abs(y) < .01
+                    labels{i} = 'R';
                 end
-                if x < 0 && abs(y) < .01       
-                    labels{i} = 'L';    
+                if x < 0 && abs(y) < .01
+                    labels{i} = 'L';
                 end
             end
             bar(A.DataPlot2,1:nlocs,fcXxy);
@@ -602,7 +607,7 @@ classdef PR_AcuityAsh < handle
             ylabel(A.DataPlot2,'Fraction Correct');
             set(A.DataPlot2,'XTickLabel',labels);
             axis(A.DataPlot2,[.25 nlocs+.75 0 1]);
-            
+
             % Dataplot3, fraction correct by cycles per degree
             % This plot only calculates the fraction correct for trials list cpds.
             cpds = unique(obj.trialsList(:,3));
@@ -623,7 +628,7 @@ classdef PR_AcuityAsh < handle
             ylabel(A.DataPlot3, 'Fraction Corret');
             set(A.DataPlot3, 'XTickLabel',labels);
             axis(A.DataPlot3, [.25 ncpds+.75 0 1]);
-        end       
+        end
     end
-    
-end 
+
+end

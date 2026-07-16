@@ -1,5 +1,37 @@
 # Original design notes
 
+
+## Structures
+Protocol (PR), Parameters (P) and Setting (S) structures
+- `PR` amd S
+- `PRI` and `SI` are bkgd image protocol
+
+The `A` structure contains:
+- `EyeTrace`, `DataPlot1` through `DataPlot4`
+- `c`, `dx`, `dy`, `rot` (initially `C` but can be changed)
+- juiceVolume
+- Assigned by **`openScreen`**
+    - `window` (winPtr assigned by `openScreen`)
+- Set when initializing a protocol
+    - `outputFile`
+    - `j` (current trial number)
+    - `finish` (max trial number)
+
+Handles also contains the following variables
+- State variables
+    - runTask, stopTask
+- BackImage state variables
+    - runOneTrial, runImage, lastRunWasImage
+- Subject variables (used to generate output file name in `A`)
+    - `outputSubject`, `outputPrefix` (protocol name), `outputDateEdit`, `outputSuffixEdit`
+- File paths: `taskPath`, `settingsPath`, `outputPath`
+- File names: `settingsFile` (protocol settings)
+- `pList` (parameter "name=value") and `pNames` (parameter names)
+- `eyeTraceRadius`, `shiftSize`, `gainSize`
+
+## Comments
+
+
 Longer comments pulled from MarmoV6. This was done to streamline the code and to also consolidate useful information into one place about how MarmoView was designed.
 
 
@@ -63,6 +95,8 @@ Misc notes:
     OPEN UP COMMUNICATION WITH THE PUMP FOR REWARD DELIVERY -- THIS IS DONE
     IMMEDIATELY USING THE RIG SETTINGS, SO THAT JUICE IS AVAILABLE TO THE
     MARMOSET WHILE NO PROTOCOLS ARE LOADED
+
+
     Also start a juice counter, for now at 0 -- It will be reset upon loading
     a new protocol and between trials. But it's changed with the give juice
     button, so best to assign it now

@@ -46,13 +46,18 @@ P.fixPointRadius = .35; % in deg, but recommended > than 4 pixels
 S.fixPointRadius = 'Radius of point (deg):';
 P.fixPointColorOut = 0;
 S.fixPointColorOut = 'Color of point outline (0-255):';
-P.fixPointColorIn = 1;
+P.fixPointColorIn = 255;
 S.fixPointColorIn = 'Color of point center (0-255):';
 P.xDeg = 0;
 S.xDeg = 'X center of point (deg):';
 P.yDeg = 0;
 S.yDeg = 'Y center of point (deg):';
-P.bkgd = 0.5;
+P.bkgd = 127;
+if ~S.use8Bit
+    P.bkgd = P.bkgd / 255;
+    P.fixPointColorIn = P.fixPointColorIn / 255;
+    P.fixPointColorOut = P.fixPointColorOut / 255;
+end
 S.bkgd = 'Choose the background color (0-255):';
 
 %  Currently not implemented, idea is 1 could be gabors, 2 could be pink
@@ -64,7 +69,10 @@ S.distractorType = 'Parameter to add distractors:';
 % Gaze indicator
 P.eyeRadius = 1.2;
 S.eyeRadius = 'Gaze indicator radius (degrees):';
-P.eyeIntensity = 0.12;
+P.eyeIntensity = 20;
+if ~S.use8Bit
+    P.eyeIntensity = P.eyeIntensity / 255;
+end
 S.eyeIntensity = 'Indicator intensity:';
 P.showEye = 0;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
@@ -112,7 +120,7 @@ S.runType = '0-User, 1-Staircase:';
 
 % THESE SETTINGS ARE USED TO MANAGE PARAMETERS BASED ON THE RUN TYPE
 % Staircasing settings, linear array with entries described below
-% 1-minimum fixMin, 2-minimum fixRan, 3-maximum fixMin, 4-maximum fixRan 
+% 1-minimum fixMin, 2-minimum fixRan, 3-maximum fixMin, 4-maximum fixRan
 S.staircase.durLims = [.2 .05 2 .65]; % Ideally differences are simply proportional for even increments/decrements
 % Currently using 1/3 up/down ratio so marmo would be at 75% steady state
 % 1-increase in fixMin, 2-increase in fixRan, if previous trial was correct
@@ -125,6 +133,6 @@ S.staircase.down = S.staircase.up * .75;   % move down stairs as fast as up, sma
 % pulses, note it is weighted, so more juice for less time on long ones
 % Marmo gets no juice if it doesn't complete the full fixation duration
 %S.staircase.rewardSchedule = [0 .25 .35 .5 .7 .9 1.2 1.5 1.8 2.1 2.4 2.8];
-S.staircase.rewardSchedule = [0 .5 1.0 1.5 2.0 2.5 3.0];  % less drops than before (too much), 
+S.staircase.rewardSchedule = [0 .5 1.0 1.5 2.0 2.5 3.0];  % less drops than before (too much),
                                                           % each level up is one more drop
-                                                          
+

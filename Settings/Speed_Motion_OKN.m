@@ -49,20 +49,26 @@ P.CycleBackImage = 10;
 S.CycleBackImage = 'If def, backimage every # trials:';
 
 %******* trial timing and reward
-P.trialdur = 5; 
+P.trialdur = 5;
 S.trialdur = 'Trial Duration (s):';
 P.rewardGapTime = 2.0;
 S.rewardGapTime = 'Drop of juice every number seconds';
-  
+
 P.iti = 0.5;
 S.iti = 'Duration of intertrial interval (s):';
-P.bkgd = 0.5;
+P.bkgd = 127;
+if ~S.use8Bit
+    P.bkgd = P.bkgd/255;
+end
 S.bkgd = 'Choose a grating background color (0-1):';
 
 % Gaze indicator
 P.eyeRadius = 1.5; % 1.5;
 S.eyeRadius = 'Gaze indicator radius (degrees):';
-P.eyeIntensity = 0.05;
+P.eyeIntensity = 5;
+if ~S.use8Bit
+    P.eyeIntensity = P.eyeIntensity/255;
+end
 S.eyeIntensity = 'Indicator intensity:';
 P.showEye = 0;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
@@ -74,26 +80,29 @@ S.noiseheight = 'Spatial noise height (degs, +/- origin):';
 
 %***************
 % number of frames for one cycle (120hz, if 120 => 1hz)
-P.gratingcycle = 120; 
+P.gratingcycle = 120;
 S.gratingcycle = 'Set the temporal freq of grating drift';
 P.spf = 0.2;  % spatial frequency
 S.spf = 'Spat freq (cyc/deg):';
-P.ori = 0;  % orientation of drifting grating (0 for horizonal, will do 
+P.ori = 0;  % orientation of drifting grating (0 for horizonal, will do
             % both directions, forward phase shift and back
 S.ori = 'Orientation of grating';
 %***** Linear spaced speeds from base speed
 % Base speed = (temp freq / spat freq) = (1hz/0.2) = 5 deg/sec
 %*** Run speeds in Log2 increases: 5,10,20,40,80 (5 of them)
 %****  and if more, then change base spf for faster or slower
-P.speednum = 5;  
+P.speednum = 5;
 S.speednum = 'Number of speeds, log 2 scale from base speed';
 %********* parameters for noise stimulus following gaze
 P.noiseradius = 50; %4.0;  % diameter of target is dva
 S.noiseradius = 'Size of Face(dva):';
-P.noiserange = 48/255;
+P.noiserange = 48;
+if ~S.use8Bit
+    P.noiserange = P.noiserange/255;
+end
 S.noiserange = 'Luminance range of grating (0-0.5):';
 P.squareWave = 1;
-S.squareWave = 'Use square wave in grating'; 
+S.squareWave = 'Use square wave in grating';
 P.dutyCycle = 0.5;
 S.dutyCycle = 'Light:dark ratio (0-1):';
 

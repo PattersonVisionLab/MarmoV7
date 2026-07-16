@@ -33,7 +33,7 @@ S.InTrialCalib = 'Eye Calib in Trials';
 % This settings is unnecessary because 'MarmoViewLastCalib.mat' is the GUI
 % default to use, but because this is an exemplar protocol I decided to
 % includee it if for some reason you don't want to use the last calibration
-% values (e.g. subjects you are running have substantially different 
+% values (e.g. subjects you are running have substantially different
 % horizontal or vertical gain). Place this calibration file in the
 % 'SupportData' directory of MarmoView
 S.calibFilename = 'MarmoViewLastCalib.mat';
@@ -53,11 +53,17 @@ P.faceRadius = 1.5;
 S.faceRadius = 'Aperture radius (degrees):';
 P.eyeRadius = 2.0;
 S.eyeRadius = 'Gaze indicator radius (degrees):';
-P.eyeIntensity = 80/255;
+P.eyeIntensity = 80;
+if ~S.use8Bit
+    P.eyeIntensity = P.eyeIntensity/255;
+end
 S.eyeIntensity = 'Indicator intensity:';
 P.showEye = 1;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
-P.bkgd = 0.5;
+P.bkgd = 127;
+if ~S.use8Bit
+    P.bkgd = P.bkgd/255;
+end
 S.bkgd = 'Choose the background color (0-255):';
 
 
@@ -94,4 +100,3 @@ S.faceConfigs = {[0 0 1];
                  [1*d -1*d 14; 1*d -2*d 15; 2*d -1*d 16]
                  [-2*d -2*d 24; -2*d 2*d 3; 2*d 2*d 7; 2*d -2*d 27]  %far four corners
                  };
-             

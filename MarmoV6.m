@@ -354,7 +354,7 @@ function Initialize_Callback(hObject, eventdata, handles)
     handles.A.outputFile = strcat(handles.outputPrefix,'_',handles.outputSubject,...
         '_',handles.outputDate,'_',handles.outputSuffix,'.mat');
     % If the file name already exists, iterate the suffix to a nonexistant file
-    while exist([handles.outputPath handles.A.outputFile],'file')
+    while exist(fullfile(handles.outputPath, handles.A.outputFile), 'file')
         i = i+1; handles.outputSuffix = num2str(i,'%.2d');
         handles.A.outputFile = strcat(handles.outputPrefix,'_',handles.outputSubject,...
             '_',handles.outputDate,'_',handles.outputSuffix,'.mat');
@@ -1039,6 +1039,9 @@ function FlipFrame_Callback(hObject, eventdata, handles)
     % If a bkgd parameter exists, flip frame with background color value
     if isfield(handles.P, 'bkgd')
         bkgd = handles.P.bkgd;
+        if handles.S.use8Bit
+            bkgd = uint8(bkgd);
+        end
         Screen('FillRect', handles.A.window, bkgd);
     end
     Screen('Flip', handles.A.window);
@@ -1295,9 +1298,9 @@ function handles = UpdateOutputFilename(handles)
         set(handles.OutputFile, 'String',handles.A.outputFile);
         % If the file name already exists, provide a warning that data will be
         % overwritten
-        if exist([handles.outputPath handles.A.outputFile],'file')
+        if exist(fullfile(handles.outputPath, handles.A.outputFile),'file')
             w=warndlg('Data file alread exists, running the trial loop will overwrite.');
-            set(w,'Position',[441.75 -183 270.75 75.75]);
+            set(w, 'Position', [441.75 -183 270.75 75.75]);
         end
         % Note that a new output file is being used. For example, someone might
         % want to be sure the trials list is started over if the output file name
@@ -1307,7 +1310,7 @@ function handles = UpdateOutputFilename(handles)
         if ( ~isempty(handles.outputSubject) && ~strcmp(handles.outputSubject,'none') )
             %****** then it should be possible to initialize a protocol with name
             set(handles.SettingsPanel,'Visible','on');
-            if ~exist([handles.settingsPath handles.settingsFile],'file')
+            if ~exist(fullfile(handles.settingsPath, handles.settingsFile),'file')
                 set(handles.Initialize,'Enable','off');
                 tstring = 'Please select a settings file...';
             else

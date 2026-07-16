@@ -1,5 +1,5 @@
 function S = MarmoViewRigSettings()
-% For use with MarmoView version 6+  
+% For use with MarmoView version 6+
 %
 % Revised by JM 8/2018 to consolidate several new features and Dummy Screen
 % Revised by SP 6/2026 to integrate trackpixx
@@ -11,11 +11,17 @@ function S = MarmoViewRigSettings()
 % For example, if you change the monitor set up, you only change those
 % monitor related variables here.
 
-%#ok<*UNRCH> 
+%#ok<*UNRCH>
 
 S = struct();
+% Additional info about trial run and function calls to cmd line
 S.verbose = false;
-S.TimeSensitive = [];  % default, allow GUI updating in run func states
+
+% default, allow GUI updating in run func states
+S.TimeSensitive = [];  
+
+% Set to true to work in 8-bit for PsychDefaultSetup(0)
+S.use8Bit = false;
 
 if S.verbose
     cprintf('_Comments', 'MarmoViewRigSettings, call\n');
@@ -26,9 +32,9 @@ onrig = false;
 if onrig
     S.DataPixx = true;
     % string: Kinesis, NewEra, Solenoid, None
-    S.rewardType = "None";   
+    S.rewardType = "None";
     % string: "Trackpixx", "Eyelink", "Arrington", "Mouse"
-    S.eyetrackerType = "Trackpixx"; 
+    S.eyetrackerType = "Trackpixx";
     S.DummyEye = false;         % use mouse instead of eye tracker
     S.DummyScreen = false;      % don't use a Dummy Display
     S.EyeDump = true;           % store all eye position data
@@ -62,7 +68,7 @@ if S.eyetrackerType == "Trackpixx"
     S.trackpixx_expectedIrisSize = 70;     % pixels
     S.trackpixx_species = 1;                % 1 = NHP, 0 = human
     if S.trackpixx_species == 1
-        S.trackpixx_ledIntensity = 15;          
+        S.trackpixx_ledIntensity = 15;
     else
         S.trackpixx_ledIntensity = 8;
     end
@@ -71,9 +77,12 @@ if S.eyetrackerType == "Trackpixx"
 end
 
 %% Set display-specific parameters
-% Override these below if needed. 
-S.gamma = 2.2;    
-S.bgColour = 0.5;
+% Override these below if needed.
+S.gamma = 2.2;
+S.bgColour = 127;
+if ~S.use8Bit
+    S.bgColour = S.bgColour/255;
+end
 S.showFrameFlipFigure = false;        % Plot standalone flip figure
 
 if S.DummyScreen
@@ -85,10 +94,10 @@ if S.DummyScreen
    S.centerPix =  [...                % Pixels for center of screen
        round((S.screenRect(3)-S.screenRect(1))/2),...
        round((S.screenRect(4)-S.screenRect(2))/2)];
-   
+
    S.guiLocation = [1000 100 890 660];
    S.screenDistance = 40; %14; %57;    % Distance of eye to screen (cm)
-    
+
 else    % Rig config
    S.monitor = 'ViewPixx-OLED';        % Monitor used for display window
    S.screenNumber = 1;                 % Designates the display for task stimuli

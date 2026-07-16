@@ -3,7 +3,7 @@ classdef PR_FixFlash < handle
     %
     % The class constructor can be called with a range of arguments:
     %
-    
+
     properties
         Iti   = 1;            % default Iti duration
         startTime   = 0;      % trial start time
@@ -19,7 +19,7 @@ classdef PR_FixFlash < handle
         BlackFixation   = 6;          % frame to see black fixation, before reward
         GABcounter   = 1;             % counter for Gabor flashing stimuli
     end
-    
+
     properties (Access = private)
         winPtr; % ptb window
         state   = 0;      % state counter
@@ -40,35 +40,40 @@ classdef PR_FixFlash < handle
         %****************
         D = struct;        % store PR data for end plot stats
     end
-    
+
     methods (Access = public)
         function o = PR_FixFlash(winPtr)
             o.winPtr = winPtr;
         end
-        
+
         function state = get_state(obj)
             state = obj.state;
         end
-        
+
         function initFunc(obj, S, P)
             obj.Faces = stimuli.gaussimages(obj.winPtr,...
                 'bkgd', S.bgColour, 'gray', false);   % color images
             obj.Faces.loadimages('./SupportData/MarmosetFaceLibrary.mat');
             obj.Faces.position = [0,0]*S.pixPerDeg + S.centerPix;
             obj.Faces.radius = round(P.faceRadius*S.pixPerDeg);
-            
+
             %******* create fixation point ****************
             obj.hFix = stimuli.fixation(obj.winPtr);   % fixation stimulus
             % set fixation point properties
             sz = P.fixPointRadius*S.pixPerDeg;
             obj.hFix.cSize = sz;
             obj.hFix.sSize = 2*sz;
-            obj.hFix.cColour = [0 0 0];
-            obj.hFix.sColour = [1 1 1];
+            if S.use8Bit
+                obj.hFix.cColour = ones(1,3);
+                obj.hFix.sColour = repmat(255, 1, 3);
+            else
+                obj.hFix.cColour = [0 0 0];
+                obj.hFix.sColour = [1 1 1];
+            end
             obj.hFix.position = [0,0]*S.pixPerDeg + S.centerPix;
             obj.hFix.updateTextures();
             %**********************************
-            
+
             %******** store history of flashed gratings
             obj.NoiseHistory = zeros(obj.MaxFrame,4);   %time, x, y, ori
             %*** Build a set of 8 oriented gratings
@@ -97,7 +102,7 @@ classdef PR_FixFlash < handle
                 obj.NoiseHistory(obj.FrameCount,:) = [NaN,dx,dy,k];
                 %*********************
             end
-            
+
             %********** load in a fixation error sound ************
             [y,fs] = audioread(['SupportData', filesep, 'gunshot_sound.wav']);
             y = y(1:floor(size(y,1)/3),:);  % shorten it, very long sound
@@ -105,7 +110,7 @@ classdef PR_FixFlash < handle
             obj.fixbreak_sound_fs = fs;
             %*********************
         end
-        
+
         function closeFunc(obj)
             obj.Faces.CloseUp();
             obj.hFix.CloseUp();
@@ -113,18 +118,18 @@ classdef PR_FixFlash < handle
                 obj.hGabor{k}.CloseUp;
             end
         end
-        
+
         function generate_trialsList(~, ~, ~)
             % nothing for this protocol
         end
-        
+
         function P = next_trial(obj,S,P)
             %********************
             obj.S = S;
             obj.P = P;
             obj.FrameCount = 0;   % for noise history
             %*******************
-            
+
             %%%% Trial control -- Update certain parameters depending on run type %%%%%
             switch obj.P.runType
                 case 1  % Staircasing
@@ -146,15 +151,15 @@ classdef PR_FixFlash < handle
                     end
             end
             %*************************************
-            
+
             % Set up fixation duration
             obj.fixDur = P.fixMin + ceil(1000*P.fixRan*rand)/1000;
-            
+
             % Reward schedule is automated based on fix duration for staircasing
             if S.runType
                 P.rewardNumber = find(obj.fixDur > S.staircase.rewardSchedule,1,'last');
             end
-            
+
             % Select a face from image set to show at center
             obj.Faces.imagenum = randi(length(obj.Faces.tex));  % pick any at random
             if rand < P.faceTrialFraction
@@ -163,10 +168,10 @@ classdef PR_FixFlash < handle
                 obj.faceTrial = false;
             end
         end
-        
+
         function [FP,TS] = prep_run_trial(obj)
             cprintf('_Comments', '\tFrameControl, call prepRunTrial\n');
-            
+
             %********VARIABLES USED IN RUNNING TRIAL LOGISTICS
             % showFix is a flag to check whether to show the fixation spot or not while
             % it is flashing in state 0
@@ -197,7 +202,7 @@ classdef PR_FixFlash < handle
             %********
             obj.startTime = GetSecs;
         end
-        
+
         function keepgoing = continue_run_trial(obj,screenTime)
             keepgoing = 0;
             if (obj.state < 4)
@@ -209,12 +214,12 @@ classdef PR_FixFlash < handle
             end
             %*******************
         end
-        
+
         %******************** THIS IS THE BIG FUNCTION *************
         function drop = state_and_screen_update(obj,currentTime,x,y)
             drop = 0;
             %******* THIS PART CHANGES WITH EACH PROTOCOL ****************
-            
+
             %%%%% STATE 0 -- GET INTO FIXATION WINDOW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % If eye travels within the fixation window, move to state 1
             if obj.state == 0 && norm([x y]) < obj.P.fixWinRadius
@@ -227,13 +232,13 @@ classdef PR_FixFlash < handle
                 obj.error = 1; % Error 1 is failure to initiate
                 obj.itiStart = GetSecs;
             end
-            
+
             %%%%% STATE 1 -- GRACE PERIOD TO BE IN FIXATION WINDOW %%%%%%%%%%%%%%%%
             % A grace period is given before the eye must remain in fixation
             if obj.state == 1 && currentTime > obj.fixStart + obj.P.fixGrace
                 obj.state = 2; % Move to hold fixation
             end
-            
+
             %%%%% STATE 2 -- HOLD FIXATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if obj.state == 2    % show flashing stimuli at random points each frame
                 %***pick a random screen location but not overlapping fixation
@@ -254,7 +259,7 @@ classdef PR_FixFlash < handle
                     obj.GABcounter = 1;
                 end
             end
-            
+
             % If fixation is held for the fixation duration, then reward
             if obj.state == 2 && currentTime > obj.fixStart + obj.fixDur
                 obj.state = 3; % Move to iti -- inter-trial interval
@@ -266,7 +271,7 @@ classdef PR_FixFlash < handle
                 obj.error = 2; % Error 2 is failure to hold fixation
                 obj.itiStart = GetSecs;
             end
-            
+
             %%%%% STATE 3 -- INTER-TRIAL INTERVAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Deliver rewards
             if obj.state == 3
@@ -284,7 +289,7 @@ classdef PR_FixFlash < handle
                     end
                 end
             end
-            
+
             % STATE SPECIFIC DRAWS
             switch obj.state
                 case 0
@@ -315,7 +320,7 @@ classdef PR_FixFlash < handle
                     end
                     %****** put fixation above the Gabors
                     obj.hFix.beforeFrame(1);
-                    
+
                 case 3
                     if ~obj.error
                         if (obj.BlackFixation)
@@ -330,7 +335,7 @@ classdef PR_FixFlash < handle
                         obj.RunFixBreakSound = 1;
                     end
             end
-            
+
             %******** if sound, do here
             if (obj.RunFixBreakSound == 1) && (obj.NeverBreakSoundTwice == 0)
                 sound(obj.fixbreak_sound,obj.fixbreak_sound_fs);
@@ -338,12 +343,12 @@ classdef PR_FixFlash < handle
             end
             %**************************************************************
         end
-        
+
         function Iti = end_run_trial(obj)
             % returns generic Iti interval
             Iti = obj.Iti - (GetSecs - obj.itiStart);
         end
-        
+
         function plot_trace(o,handles)
             %********* append other things eye trace plots if you desire
             h = handles.EyeTrace;
@@ -357,9 +362,9 @@ classdef PR_FixFlash < handle
             axis(h,[-eyeRad eyeRad -eyeRad eyeRad]);
             set(h,'NextPlot','Add');
         end
-        
+
         function PR = end_plots(o,P,A)   %update D struct if passing back info
-            
+
             %************* STORE DATA to PR
             PR = struct;
             PR.error = o.error;
@@ -368,13 +373,13 @@ classdef PR_FixFlash < handle
             PR.y = P.yDeg;
             %******* this is also where you store Gabor Flash Info
             PR.NoiseHistory = o.NoiseHistory(1:o.FrameCount,:);
-            
+
             %%%% Record some data %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             o.D.error(A.j) = o.error;
             o.D.x(A.j) = P.xDeg;
             o.D.y(A.j) = P.yDeg;
             o.D.fixDur(A.j) = o.fixDur;
-            
+
             %%%% Plot results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % Dataplot 1, errors
             errors = [0 1 2; sum(o.D.error==0) sum(o.D.error==1) sum(o.D.error==2)];
@@ -382,11 +387,11 @@ classdef PR_FixFlash < handle
             title(A.DataPlot1,'Errors');
             ylabel(A.DataPlot1,'Count');
             set(A.DataPlot1,'XLim',[-.75 errors(1,end)+.75]);
-            
+
             %% show the number - 2016-05-05 - Shaun L. Cloherty <s.cloherty@ieee.org>
             x = errors(1,:);
             y = 0.15*max(ylim);
-            
+
             h = [];
             for ii = 1:size(errors,2)
                 axes(A.DataPlot1);
@@ -396,7 +401,7 @@ classdef PR_FixFlash < handle
                 end
             end
             %%
-            
+
             % Dataplot 2, wait time histogram
             if any(o.D.error==0)
                 hist(A.DataPlot2,o.D.fixDur(o.D.error==0));
@@ -406,9 +411,9 @@ classdef PR_FixFlash < handle
             title(A.DataPlot2,sprintf('%.2fs %.2fs',median(o.D.fixDur(o.D.error==0)),max(o.D.fixDur(o.D.error==0))));
             ylabel(A.DataPlot2,'Count');
             xlabel(A.DataPlot2,'Time');
-            
+
         end
-        
+
     end
-    
-end 
+
+end

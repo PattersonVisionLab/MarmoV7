@@ -21,30 +21,26 @@ classdef PR_Speed_Motion_OKN < handle
         %*********
         S;              % copy of Settings struct (loaded per trial start)
         P;              % copy of Params struct (loaded per trial)
-        trialsList;     % store copy of trial list (not good to keep in S)        
+        trialsList;     % store copy of trial list (not good to keep in S)
         %**********************************
         D = struct();        % store PR data (see end_plots)
-    end
-
-    properties (Hidden, Constant)
-        MAX_TRIAL_DURATION = 20  % seconds
     end
 
     properties (SetAccess = private)
         %********* stimulus structs for use
         % which noise stim (if long term duration)
-        noiseStim = 0;  
-        % tested orientations   
-        ori = 0;           
+        noiseStim = 0;
+        % tested orientations
+        ori = 0;
         spatialFreq = 0.2;
         temporalFrequency = 1;      %
         % speed change phase step
-        speedStep = 1;         
+        speedStep = 1;
         %******* parameters for Noise History grating stimulus
         NoiseHistory = []; % list of noise frames over trial and their times
         FrameCount = 0;    % count noise frames
         % twenty second maximum
-        MaxFrame = (120*20); 
+        MaxFrame = (120*20);
         TrialDur = 0;      % store internally the trial duration (make less than 20)
         StimPhase = 1;
     end
@@ -80,7 +76,7 @@ classdef PR_Speed_Motion_OKN < handle
             for i = 1:P.gratingcycle
                 fprintf('%u  ', i);
                 %******** replace dot field with full-field grating
-                obj.hGrating{1,i} = stimuli.grating(obj.winPtr); 
+                obj.hGrating{1,i} = stimuli.grating(obj.winPtr);
                 obj.hGrating{1,i}.position = S.centerPix;
                 if isinf(P.noiseradius)
                     obj.hGrating{1,i}.radius = Inf; %fill entire screen
@@ -212,7 +208,7 @@ classdef PR_Speed_Motion_OKN < handle
             % screen and things like that
             if (obj.FrameCount)
                 % store screen flip
-                obj.NoiseHistory(obj.FrameCount,1) = screenTime;  
+                obj.NoiseHistory(obj.FrameCount,1) = screenTime;
             end
             %******************************************************
         end
@@ -245,7 +241,7 @@ classdef PR_Speed_Motion_OKN < handle
 
         function Iti = end_run_trial(obj)
             % returns generic Iti interval
-            Iti = obj.Iti - (GetSecs() - obj.itiStart); 
+            Iti = obj.Iti - (GetSecs() - obj.itiStart);
         end
 
         function plot_trace(obj, handles)
@@ -271,7 +267,7 @@ classdef PR_Speed_Motion_OKN < handle
             else
                 PR.NoiseHistory = obj.NoiseHistory(1:obj.FrameCount,:);
             end
-            PR.ori = obj.ori; 
+            PR.ori = obj.ori;
             PR.spatfreq = obj.spatialFreq;
             PR.tempfreq = obj.temporalFrequency;
             PR.noiseStim = obj.noiseStim; %differs based on noise type
