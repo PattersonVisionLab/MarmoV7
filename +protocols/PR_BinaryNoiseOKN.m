@@ -93,8 +93,11 @@ classdef PR_BinaryNoiseOKN < handle
                 obj.noiseStim = 1;
             end
 
-            % % Randomly pick one of exactly two speed conditions each trial
-            if rand() < 0.5
+            % Randomly pick one of exactly three speed conditions each trial
+            r = rand();
+            if r < 1/3
+                obj.speedDegPerSec = P.speedVeryLow;
+            elseif r < 2/3
                 obj.speedDegPerSec = P.speedLow;
             else
                 obj.speedDegPerSec = P.speedHigh;

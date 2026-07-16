@@ -56,6 +56,8 @@ S.noiseSquareDeg = 'Binary noise element size (dva):';
 P.contrastLevel = 96/255; % = 0.376, matches grating script's noiserange = 48/255 (bkgd +/- 48/255 in normalized units)
 S.contrastLevel = 'Contrast (0-1, 1 = full black/white):';
 %***** speed parameterization *******
+P.speedVeryLow = 1; % deg/s
+S.speedVeryLow = 'Very low speed condition (deg/s)';
 P.speedLow = 10;   % deg/s
 S.speedLow = 'Low speed condition (deg/s):';
 P.speedHigh = 40;  % deg/s
