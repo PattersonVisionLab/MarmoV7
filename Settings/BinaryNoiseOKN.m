@@ -26,6 +26,8 @@ S.protocolTitle = 'Binary noise OKN';
 % Reward setting
 P.rewardNumber = 1; % Max juice, only 1 drop
 S.rewardNumber = 'Number of juice pulses to deliver:';
+P.CycleBackImage = 10;
+S.CycleBackImage = 'If def, backimage every # trials:';
 %******* trial timing and reward
 P.trialdur = 10;
 S.trialdur = 'Trial Duration (s):';
