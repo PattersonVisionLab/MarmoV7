@@ -15,7 +15,7 @@ function S = MarmoViewRigSettings()
 
 S = struct();
 % Additional info about trial run and function calls to cmd line
-S.verbose = false;
+S.verbose = true;
 
 % default, allow GUI updating in run func states
 S.TimeSensitive = [];  
