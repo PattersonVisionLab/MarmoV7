@@ -53,17 +53,13 @@ P.faceRadius = 1.5;
 S.faceRadius = 'Aperture radius (degrees):';
 P.eyeRadius = 2.0;
 S.eyeRadius = 'Gaze indicator radius (degrees):';
-P.eyeIntensity = 80;
+P.eyeIntensity = 80/255;
 S.eyeIntensity = 'Indicator intensity:';
 P.showEye = 1;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
-P.bkgd = 127;
+P.bkgd = 0.5;
 S.bkgd = 'Choose the background color (0-255):';
 
-if ~S.use8Bit
-    P.eyeIntensity = P.eyeIntensity/255;
-    P.bkgd = P.bkgd/255;
-end
 
 % Trial timing
 P.faceDur = 2;

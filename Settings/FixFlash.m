@@ -46,20 +46,14 @@ P.fixPointRadius = .35; % in deg, but recommended > than 4 pixels
 S.fixPointRadius = 'Radius of point (deg):';
 P.fixPointColorOut = 0;
 S.fixPointColorOut = 'Color of point outline (0-255):';
-P.fixPointColorIn = 255;
+P.fixPointColorIn = 1;
 S.fixPointColorIn = 'Color of point center (0-255):';
 P.xDeg = 0;
 S.xDeg = 'X center of point (deg):';
 P.yDeg = 0;
 S.yDeg = 'Y center of point (deg):';
-P.bkgd = 127;
+P.bkgd = 0.5;
 S.bkgd = 'Choose the background color (0-255):';
-
-if ~S.use8Bit
-    P.bkgd = P.bkgd / 255;
-    P.fixPointColorIn = P.fixPointColorIn / 255;
-    P.fixPointColorOut = P.fixPointColorOut / 255;
-end
 
 %  Currently not implemented, idea is 1 could be gabors, 2 could be pink
 %  noise, 3 could be natural scenes, etc. Each distractor type would need
@@ -70,13 +64,10 @@ S.distractorType = 'Parameter to add distractors:';
 % Gaze indicator
 P.eyeRadius = 1.2;
 S.eyeRadius = 'Gaze indicator radius (degrees):';
-P.eyeIntensity = 20;
+P.eyeIntensity = 0.12;
 S.eyeIntensity = 'Indicator intensity:';
 P.showEye = 0;
 S.showEye = 'Show the gaze indicator? (0 or 1):';
-if ~S.use8Bit
-    P.eyeIntensity = P.eyeIntensity/255;
-end
 
 % Windows
 P.fixWinRadius = 1.5;

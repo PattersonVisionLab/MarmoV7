@@ -1,4 +1,4 @@
-function S = MarmoViewRigSettings
+function S = MarmoViewRigSettings()
 % For use with MarmoView version 6+  
 %
 % Revised by JM 8/2018 to consolidate several new features and Dummy Screen
@@ -15,16 +15,14 @@ function S = MarmoViewRigSettings
 
 S = struct();
 S.verbose = false;
-S.use8Bit = false;
 S.TimeSensitive = [];  % default, allow GUI updating in run func states
 
 if S.verbose
     cprintf('_Comments', 'MarmoViewRigSettings, call\n');
 end
 
-% NEW COMMANDS TO INTEGRATE LATER
-
-onrig = true;
+%% Rig configuration options
+onrig = false;
 if onrig
     S.DataPixx = true;
     % string: Kinesis, NewEra, Solenoid, None
@@ -42,7 +40,8 @@ else
     S.DummyScreen = true;
     S.EyeDump = false;
 end
-%***************************
+
+%% Set reward-specific parameters
 switch S.rewardType
     case "NewEra"
         S.pumpCom = 'COM4';       % COM port the New Era syringe pump
@@ -57,6 +56,7 @@ switch S.rewardType
         S.kinesis_stepSize = 0.2;         % Step to release 1 drop reliably (mm)
 end
 
+%% Set eyetracker-specific parameters
 % Defaults for TrackPixx. Update once marmoset-specific values are found.
 if S.eyetrackerType == "Trackpixx"
     S.trackpixx_expectedIrisSize = 70;     % pixels
@@ -70,27 +70,24 @@ if S.eyetrackerType == "Trackpixx"
     S.trackpixx_mainEye = "right";          % right = magenta on trackpixx
 end
 
+%% Set display-specific parameters
+% Override these below if needed. 
 S.gamma = 2.2;    
-if S.use8Bit
-    % use 127 if gamma corrected, or 186
-    S.bgColour = 127;
-else
-    S.bgColour = 0.5;
-end                   
+S.bgColour = 0.5;
+S.showFrameFlipFigure = false;        % Plot standalone flip figure
 
 if S.DummyScreen
-   S.monitor = 'Laptop';                    % Monitor for display window
-   S.screenNumber = 1;                      % Display for task stimuli
-   S.frameRate = 60;                        % Frame rate of screen (Hz)
-   S.screenRect = [50 50 960 540];            % Screen dimensions in pixels
-   S.screenWidth = 15;                      % Width of screen (cm)
-   S.centerPix =  [...                      % Pixels for center of screen
-       round((S.screenRect(3)-S.screenRect(1))/2) + S.screenRect(1),...
-       round((S.screenRect(4)-S.screenRect(2))/2) + S.screenRect(2)];
+   S.monitor = 'Laptop';              % Monitor for display window
+   S.screenNumber = 1;                % Display for task stimuli
+   S.frameRate = 60;                  % Frame rate of screen (Hz)
+   S.screenRect = [50 50 960 540];    % Screen dimensions in pixels
+   S.screenWidth = 15;                % Width of screen (cm)
+   S.centerPix =  [...                % Pixels for center of screen
+       round((S.screenRect(3)-S.screenRect(1))/2),...
+       round((S.screenRect(4)-S.screenRect(2))/2)];
    
    S.guiLocation = [1000 100 890 660];
-   S.screenDistance = 40; %14; %57;         % Distance of eye to screen (cm)
-   S.pixPerDeg = PixPerDeg(S.screenDistance,S.screenWidth,S.screenRect(3));
+   S.screenDistance = 40; %14; %57;    % Distance of eye to screen (cm)
     
 else    % Rig config
    S.monitor = 'ViewPixx-OLED';        % Monitor used for display window
@@ -100,11 +97,12 @@ else    % Rig config
    S.screenWidth = 53;                 % Width of screen (cm)
 
    S.centerPix =  [...                 % Pixels for center of screen
-       round((S.screenRect(3)-S.screenRect(1))/2) + S.screenRect(1),...
-       round((S.screenRect(4)-S.screenRect(2))/2) + S.screenRect(2)];
+       round((S.screenRect(3)-S.screenRect(1))/2),...
+       round((S.screenRect(4)-S.screenRect(2))/2)];
    S.guiLocation = [800 100 890 660];
    S.screenDistance = 70;              % Distance of eye to screen (cm)
-   S.pixPerDeg = PixPerDeg(S.screenDistance, S.screenWidth, S.screenRect(3));
+   S.showFrameFlipFigure = true;        % Plot standalone flip figure
 end
 
+S.pixPerDeg = PixPerDeg(S.screenDistance, S.screenWidth, S.screenRect(3));
 
